@@ -6,3 +6,5 @@
 .questionfigure{display:block;max-width:100%;height:auto;margin:20px auto}
 
 .goalgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}.goalkpi{background:#f3f6ef;border-radius:12px;padding:16px}.goalkpi small{display:block;color:#6b7e72;font-size:12px}.goalkpi strong{font-size:28px}.goalkpi span{font-size:13px}.goalpanel .badge{white-space:normal}@media(max-width:560px){.goalgrid{grid-template-columns:1fr}.goalkpi{padding:13px}}
+
+.top{position:sticky;top:0;z-index:20}.appReturn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:#20594e;color:#fff;padding:11px 18px;font-weight:700;text-decoration:none;white-space:nowrap;font-size:14px}.appReturn:hover{background:#163e35}.appReturnBottom{display:flex;max-width:360px;margin:28px auto 0}@media(max-width:760px){.appReturn{font-size:12px;padding:10px 12px}.top{gap:8px}.brand{font-size:12px}}

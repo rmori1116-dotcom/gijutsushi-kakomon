@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-<link rel="stylesheet" href="styles.css?v=dc7ff4996b">
+<link rel="stylesheet" href="styles.css?v=bd7e220134">
 
 </head>
 <body>
@@ -61,11 +61,13 @@
     <div class="homeScope"><label for="homeSubject">おすすめの科目</label><select id="homeSubject"><option value="all">3科目すべて</option><option value="基礎科目">基礎科目</option><option value="適性科目">適性科目</option><option value="専門科目(建設部門)">建設部門</option></select><p id="homeStats" class="meta"></p></div>
     <div class="recommendationCard"><h3>学習スケジュール</h3><p class="meta">日別・週別の予定、目標に対する進捗、休みの日の再計画を確認できます。</p><a class="btn btn-primary btn-sm" href="schedule/">予定と進捗を見る →</a></div>
     <div id="homeRecommendation" class="recommendationCard hide" aria-live="polite"></div>
-    <div id="dueReviewCard" class="recommendationCard hide" aria-live="polite">
-      <h3>今日の復習</h3><p id="dueReviewInfo"></p>
-      <div id="dueReviewThemes"></div>
-      <div class="recommendationActions"><button id="btnDueReview" class="btn btn-primary btn-sm" type="button">復習を始める</button><button id="btnDueReviewAll" class="btn btn-ghost btn-sm" type="button">すべて復習する</button></div>
-    </div>
+    <details id="dueReviewCard" class="homeMore recommendationCard hide">
+      <summary><span><strong>今日の復習</strong><small id="dueReviewInfo"></small><small>タップで開く・閉じる</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="homeMoreBody">
+        <div id="dueReviewThemes"></div>
+        <div class="recommendationActions"><button id="btnDueReview" class="btn btn-primary btn-sm" type="button">復習を始める</button><button id="btnDueReviewAll" class="btn btn-ghost btn-sm" type="button">すべて復習する</button></div>
+      </div>
+    </details>
     <div id="homeTools">
     <details class="homeMore" id="frequencyCard">
       <summary><span><strong>頻出テーマから学ぶ</strong><small>公式過去問の出題年度数で並べる</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
@@ -420,7 +422,7 @@
 <script>
 /* データを読み込んでからアプリ本体(app.js)を起動する */
 (function () {
-  var V = 'dc7ff4996b';
+  var V = 'bd7e220134';
   var startupError = false;
   // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
   window.addEventListener('error', function (event) {

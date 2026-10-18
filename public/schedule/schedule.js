@@ -6,7 +6,7 @@ const short=s=>s==='専門科目(建設部門)'?'建設部門':s;
 const fmt=d=>`${+d.slice(5,7)}/${+d.slice(8)}（${'日月火水木金土'[P.date(d).getDay()]}）`;
 const pct=r=>r===null?'—':Math.round(r*100)+'%';
 let today=P.day(new Date());
-let qs=[],predictions=[],book={},tab='today',selected=today<P.defaults.start?P.defaults.start:today,weekStart=selected,state={config:structuredClone(P.defaults),source:'sample',history:{},checks:{},notes:{},sessionLog:[]},model;
+let qs=[],predictions=[],book={},tab='today',selected=today<P.defaults.start?P.defaults.start:today,weekStart=selected,state={config:structuredClone(P.defaults),source:'app',history:{},checks:{},notes:{},sessionLog:[]},model;
 function tell(message){$('notice').textContent=message;}
 function save(changed=true){try{if(changed&&state.source==='app'){state._syncAt=Date.now();state._syncActor=crypto.randomUUID();}localStorage.setItem(KEY,JSON.stringify(state));if(changed&&state.source==='app')window.dispatchEvent(new Event('schedule-plan-change'));}catch(e){tell('端末への保存ができません。計画を書き出して保存してください。');}}
 function readAppHistory(){
@@ -21,17 +21,13 @@ function launchApp(task){
 function resumeSync(){const now=P.day(new Date());if(now!==today){if(selected===today)selected=now;today=now;}if(!qs.length||state.source!=='app')return;if($('detail').open)return;try{render();}catch(e){tell(e.message);}}
 function reloadPlan(){try{const next=JSON.parse(localStorage.getItem(KEY)||'null');if(next?.config&&!P.validate(next.config)){state={...state,...next,history:state.history,goal:validGoal(next.goal)?next.goal:null};render();}}catch(e){tell('同期した計画を読み込めませんでした。再読み込みしてください。');}}
 window.addEventListener('schedule-cloud-applied',reloadPlan);
-function sample(){
- const out={},counts=[65,82,168],correct=[17,47,82];
- P.subjects.forEach((s,i)=>qs.filter(q=>q.subject===s).slice(0,counts[i]).forEach((q,j)=>{out[q.id]={n:1,ok:j<correct[i]?1:0,lastOk:j<correct[i],attempts:[]};}));return out;
-}
 const fields=[['start','学習開始日','date'],['finish','過去問の完了目標','date'],['prediction','予想問題の日','date'],['final','最終確認の日','date'],['exam','試験日（自分で確認）','date'],['target','各科目の目標正答率（%）','number',1,100,1],['weekdayNew','平日の新規目標（問）','number',1,100,1],['holidayNew','休日の新規目標（問）','number',1,150,1],['weekdayReview','平日の復習目標（問）','number',0,50,1],['holidayReview','休日の復習目標（問）','number',0,70,1],];
 function render(){
  if(state.source==='app')readAppHistory();
  const todayDone=state.goal?P.goalProgress(qs,state.history,state.goal,today,today).actual:0;
  model=P.plan(qs,state.history,state.config,today,todayDone);
  if(!state.goal){state.goal=P.createGoal(qs,state.history,state.config,today);save(false);}
- $('sourceLabel').textContent=state.source==='sample'?'サンプル記録 · 架空の履歴で操作を試せます':state.source==='empty'?'記録なし · この試作品の演習から開始':state.source==='app'?'アプリと自動連動中 · 同じブラウザー・アカウントの記録':'取り込んだ学習記録を使用';
+ $('sourceLabel').textContent='アプリと自動連動中 · 同じブラウザー・アカウントの記録';
  document.querySelectorAll('.view').forEach(e=>e.hidden=e.id!==tab);
  document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',e.dataset.tab===tab);if(e.dataset.tab===tab)e.setAttribute('aria-current','page');else e.removeAttribute('aria-current');});
  if(tab==='today')renderToday();if(tab==='calendar')renderCalendar();if(tab==='progress')renderProgress();if(tab==='settings')renderSettings();
@@ -126,14 +122,10 @@ function answer(value){
 document.querySelectorAll('[data-tab]').forEach(e=>e.onclick=()=>switchTab(e.dataset.tab));
 $('settingsShortcut').onclick=()=>switchTab('settings');$('closeDialog').onclick=()=>{$('detail').close();render();};$('detail').addEventListener('close',()=>render());
 $('configForm').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),c={...state.config};fields.forEach(([k,,t])=>c[k]=t==='number'?Number(fd.get(k)):fd.get(k));const error=P.validate(c);if(error){tell(error);return;}state.config=c;save();render();tell('計画を保存しました。設定した目標問題数で残りの問題を再配分しました。');};
-$('sampleButton').onclick=()=>{if(!confirm('現在の試作品内の記録をサンプルに切り替えます。必要なら先に計画を書き出してください。'))return;state.goal=null;state.history=sample();state.source='sample';state.checks={};state.notes={};save();render();tell('サンプル記録へ切り替えました。問題ごとの履歴は架空です。');};
-$('emptyButton').onclick=()=>{if(!confirm('試作品内の記録とチェックを空にします。本番アプリの記録は変わりません。'))return;state.goal=null;state.history={};state.checks={};state.notes={};state.source='empty';save();render();tell('記録なしへ切り替えました。');};
-$('historyImport').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw Error('20MB以下のJSONを選んでください。');const data=JSON.parse(await file.text()),h=P.normalize(data,qs);if(!Object.keys(h).length)throw Error('対応する公式過去問の解答記録が見つかりません。');if(!confirm(`${Object.keys(h).length}問の記録で試作品内の履歴を置き換えますか？`))return;state.goal=null;state.history=h;state.source='import';state.checks={};save();render();tell(`${Object.keys(h).length}問の記録を取り込みました。元の学習記録は変更していません。`);}catch(err){tell('取込できませんでした：'+err.message);}finally{e.target.value='';}};
 $('exportPlan').onclick=()=>{const blob=new Blob([JSON.stringify({kind:'study-schedule-prototype',version:1,state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`学習計画_${today}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);tell('計画を書き出しました。');};
-$('planImport').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw Error('20MB以下のJSONを選んでください。');const data=JSON.parse(await file.text());if(data.kind!=='study-schedule-prototype'||!data.state)throw Error('この試作品で書き出した計画を選んでください。');const c={...structuredClone(P.defaults),...data.state.config};const error=P.validate(c);if(error)throw Error(error);if(!confirm('現在の計画と試作品内の記録を、ファイルの内容で置き換えますか？'))return;state={config:c,source:['sample','empty','app','import'].includes(data.state.source)?data.state.source:'import',history:P.normalize(data.state.history,qs),checks:data.state.checks||{},notes:data.state.notes||{},goal:validGoal(data.state.goal)?data.state.goal:null};save();render();tell('計画を読み込みました。');}catch(err){tell('読込できませんでした：'+err.message);}finally{e.target.value='';}};
 window.addEventListener('storage',e=>{if(e.key===DriveStudyCore.ACTIVE){location.reload();return;}if(e.key===appStorage.key(APP_HISTORY)||e.key===null)resumeSync();if(e.key===KEY)reloadPlan();});
 window.addEventListener('focus',resumeSync);window.addEventListener('pageshow',resumeSync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeSync();});
-$('autoSyncButton').onclick=()=>{if(state.source!=='app')state.goal=null;state.source='app';readAppHistory();save(false);render();tell('アプリとの自動連動を有効にしました。サンプルや取り込んだ記録は本番アプリへ書き込みません。');};
+$('autoSyncButton').onclick=()=>{if(state.source!=='app')state.goal=null;state.source='app';readAppHistory();save(false);render();tell('アプリとの自動連動を有効にしました。学習記録をもとに目標と実績を更新します。');};
 async function init(){try{
  [qs,predictions,book]=await Promise.all(['questions','predictions','meta'].map(async n=>{const r=await fetch(`../data/${n}.json`);if(!r.ok)throw Error('データの読込に失敗しました');return r.json();}));
  book={...book.textbook,figures:book.figures};
@@ -142,6 +134,7 @@ async function init(){try{
  if(raw?.config&&!P.validate({...structuredClone(P.defaults),...raw.config})){state={...state,...raw,config:{...structuredClone(P.defaults),...raw.config},history:P.normalize(raw.history,qs),goal:validGoal(raw.goal)?raw.goal:null};}
  else{let legacy;try{legacy=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');}catch(e){}if(!appStorage.owner&&legacy?.config&&!P.validate({...structuredClone(P.defaults),...legacy.config})){state.config={...structuredClone(P.defaults),...legacy.config};state.checks=legacy.checks||{};state.notes=legacy.notes||{};}state.source='app';state.goal=null;readAppHistory();save(false);}
  if(state.source==='app'&&!state._syncAt&&JSON.stringify(state.config)!==JSON.stringify(P.defaults)){state._syncAt=1;state._syncActor='legacy-plan';save(false);}
+ if(state.source!=='app'){state.source='app';state.goal=null;readAppHistory();save(false);}
  $('loading').hidden=true;render();window.dispatchEvent(new Event('schedule-ready'));
  }catch(e){$('loading').innerHTML=`<h2>読み込めませんでした</h2><p>ローカルサーバーからこのページを開いてください。</p><p>${esc(e.message)}</p><button onclick="location.reload()">再読み込み</button>`;}}
 init();

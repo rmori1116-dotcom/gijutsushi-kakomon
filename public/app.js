@@ -560,6 +560,8 @@ function renderDueReview(){
 }
 $('btnDueReview').addEventListener('click',()=>{const due=orderedDueReviewQuestions().slice(0,10);if(due.length)startQuiz(due,'study');});
 $('btnDueReviewAll').addEventListener('click',()=>{const due=orderedDueReviewQuestions();if(due.length)startQuiz(due,'study');});
+try{$('dueReviewCard').open=localStorage.getItem('gijutsushi_due_review_open_v1')==='true';}catch(e){}
+$('dueReviewCard').addEventListener('toggle',()=>{try{localStorage.setItem('gijutsushi_due_review_open_v1',String($('dueReviewCard').open));}catch(e){}});
 // Refresh the day boundary when returning to the app, without interrupting a quiz.
 window.addEventListener('focus',()=>{if(!$('setup').classList.contains('hide'))renderDueReview();});
 function saveUnsure(){ try{ localStorage.setItem(UNSURE_KEY,JSON.stringify([...unsure])); }catch(e){} }
