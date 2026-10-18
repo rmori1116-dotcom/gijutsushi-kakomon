@@ -3291,13 +3291,13 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     if(!DRIVE_CLIENT_ID)status('Google接続は準備中です。現在の記録はこの端末に保存されます。');
   }
   const card=document.createElement('section');card.className='card';card.id='driveSyncCard';
-  card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモ・スケジュールの目標と計画を保存します。保存は端末からドライブへ、読み込みはドライブから端末へ反映します。既存記録と統合します。自動の保存・読み込みは行いません。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
+  card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモ・スケジュールの目標と計画を保存します。同期ボタン1つで、学習・復習記録とスケジュールの目標・計画をまとめて送受信し、両方の端末の記録を統合します。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
   document.getElementById('recordCard')?.after(card);
   const identity=card.querySelector('#driveIdentity'),statusEl=card.querySelector('#driveSyncStatus');
   const connect=card.querySelector('#driveConnect'),sync=card.querySelector('#driveNow'),logout=card.querySelector('#driveLogout'),migrate=card.querySelector('#driveImport');
-  sync.textContent='ドライブへ保存';
-  const load=card.querySelector('#driveLoad');
-  card.querySelector('h3').textContent='アカウントとドライブ保存';
+  sync.textContent='すべての記録を同期';
+  const load=card.querySelector('#driveLoad');load.hidden=true;
+  card.querySelector('h3').textContent='アカウントと記録の同期';
   function fail(error){
     if(error?.expired){token='';enabled=false;status('接続の有効期限が切れました。Googleアカウントを再接続してください。未送信の記録は端末内に残っています。');}
     else status('同期できませんでした。端末内の記録は残っています。通信を確認して再試行してください。'+(error?.message?' '+error.message:''));
@@ -3357,10 +3357,14 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     if(busy||!enabled||!token||stopped)return;
     if(navigator.onLine===false){status('オフラインです。記録は端末内に保存されています。');return;}
     // Do not replace an active answer or drawing session underneath the learner.
-    if(!$('quiz').classList.contains('hide')||!$('memo').classList.contains('hide')){status('学習中の記録は端末内に保存済みです。学習画面を閉じてから、保存または読み込みを押してください。');return;}
+    if(!$('quiz').classList.contains('hide')||!$('memo').classList.contains('hide')){status('学習中の記録は端末内に保存済みです。学習画面を閉じてから、同期を押してください。');return;}
     busy=true;update();status(mode==='save'?'保存する記録を確認しています…':'ドライブから学習記録を読み込んでいます…');
     try{
-      capture();const files=await listFiles();const docs=[];
+      // Another open schedule tab may already have synced this account.
+      const external=C.validate(read(ledgerKey,C.empty(owner)),owner);
+      const refreshed=C.merge([external,capture()],owner,mergeStudyRecord);
+      apply(refreshed);persist(refreshed);
+      const files=await listFiles();const docs=[];
       for(const file of files){
         if(Number(file.size)>20*1024*1024)throw Error('保存データが大きすぎます。');
         docs.push(C.validate(await request('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media'),owner));
@@ -3368,24 +3372,19 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
       // Capture edits made during network requests and merge again before upload.
       const merged=C.merge([...docs,capture()],owner,mergeStudyRecord);
       if(stopped) return;
-      if(!$('quiz').classList.contains('hide')||!$('memo').classList.contains('hide')){status('学習画面を閉じてから、もう一度保存または読み込みを押してください。端末内の記録は保存済みです。');return;}
-      if(mode==='save'){
-        // Preserve other devices' records on Drive, without applying them locally.
-        status('ドライブへ保存しています…');await upload(merged);
-      }else{
-        if(!docs.length){status('ドライブに保存された記録がありません。元の端末で「ドライブへ保存」を押してください。');return;}
-        // Reading never writes back to Drive. Keep unsaved local work when merging.
-        apply(merged);persist(merged);
-      }
+      if(!$('quiz').classList.contains('hide')||!$('memo').classList.contains('hide')){status('学習画面を閉じてから、もう一度同期を押してください。端末内の記録は保存済みです。');return;}
+      status('学習・復習記録と目標・計画を同期しています…');
+      await upload(merged);
+      apply(merged);persist(merged);
       raw.setItem('gijutsushi_drive_'+mode+'_v1:'+owner,String(Date.now()));
-      const data=C.materialize(mode==='save'?capture():merged);
-      status((mode==='save'?'ドライブへ保存しました':'ドライブから読み込みました')+'（'+new Date().toLocaleTimeString('ja-JP')+'）。端末の解答記録 '+Object.keys(data.history).length+'問・学習済み '+data.learned.length+'テーマ。');
+      const data=C.materialize(merged);
+      status('学習・復習記録と目標・計画をすべて同期しました'+'（'+new Date().toLocaleTimeString('ja-JP')+'）。端末の解答記録 '+Object.keys(data.history).length+'問・学習済み '+data.learned.length+'テーマ。');
     }catch(e){fail(e);}finally{busy=false;update();}
   }
   function schedule(){
     if(suppress||!owner||stopped)return;
     try{capture();}catch(e){status('端末内の同期情報を保存できません。記録を書き出して空き容量を確認してください。');return;}
-    if(!busy)status('端末内の記録を更新しました。ドライブへ反映するには「ドライブへ保存」を押してください。');
+    if(!busy)status('端末内の記録を更新しました。ドライブへ反映するには「すべての記録を同期」を押してください。');
   }
   async function authorized(response){
     busy=true;update();
@@ -3400,13 +3399,13 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
         // Existing local records are not silently uploaded to a newly selected user.
         raw.setItem(identityKey,JSON.stringify({sub:user.sub,email:user.email}));
         studyStorage.switchTo(user.sub);
-        raw.setItem('gijutsushi_drive_notice','アカウントを選択しました。「ドライブへ保存」または「ドライブから読み込み」を押してください。以前の端末内記録は取り込みボタンで追加できます。');
+        raw.setItem('gijutsushi_drive_notice','アカウントを選択しました。「すべての記録を同期」または「ドライブから読み込み」を押してください。以前の端末内記録は取り込みボタンで追加できます。');
         stopped=true;token='';location.reload();return;
       }
       raw.setItem(identityKey,JSON.stringify({sub:user.sub,email:user.email}));
       enabled=true;busy=false;
       const action=requestedAction;requestedAction='';
-      if(action)await synchronize(action);else status('Googleへ接続しました。保存または読み込みを選んでください。');
+      if(action)await synchronize(action);else status('Googleへ接続しました。同期を選んでください。');
     }catch(e){token='';enabled=false;fail(e);}finally{busy=false;update();}
   }
   function prepareSDK(){
@@ -3419,7 +3418,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     });return sdkPromise;
   }
   function connectGoogle(){
-    if(navigator.onLine===false){status('オフラインです。インターネットに接続してから、もう一度保存または読み込みを押してください。');return;}
+    if(navigator.onLine===false){status('オフラインです。インターネットに接続してから、もう一度同期を押してください。');return;}
     if(!tokenClient){prepareSDK().then(()=>status('接続の準備ができました。もう一度接続ボタンを押してください。')).catch(fail);return;}
     // Invoked synchronously from the click to work with Safari popup restrictions.
     busy=true;update();status('Googleの接続画面でアカウントを選択してください。');
@@ -3429,7 +3428,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   function runAction(mode){
     if(busy){status('同期処理中です。完了までお待ちください。');return;}
     if(stopped){status('別の画面でアカウントが変更されました。この画面を再読み込みしてください。');return;}
-    if(navigator.onLine===false){status('オフラインです。記録は端末内に保存されています。接続後に保存または読み込みを押してください。');return;}
+    if(navigator.onLine===false){status('オフラインです。記録は端末内に保存されています。接続後に同期を押してください。');return;}
     if(!enabled||!token||Date.now()>=expires){requestedAction=mode;connectGoogle();return;}
     return synchronize(mode);
   }
@@ -3445,7 +3444,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
       const previous={history:read(C.KEYS.history,{}),unsure:read(C.KEYS.unsure,[]),learned:read(C.KEYS.learned,[]),memos:read(C.KEYS.memos,{})};
       const legacy=C.capture(C.empty(owner),previous,'legacy-import',1);
       const merged=C.merge([legacy,capture()],owner,mergeStudyRecord);apply(merged);persist(merged);schedule();
-      status('以前の端末内記録を取り込みました。「ドライブへ保存」を押すとドライブへ反映します。');
+      status('以前の端末内記録を取り込みました。「すべての記録を同期」を押すとドライブへ反映します。');
     }catch(e){fail(e);}
   });
   window.addEventListener('study-local-change',schedule);
@@ -3453,7 +3452,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   window.addEventListener('offline',()=>{status('オフラインです。記録は端末内に保存されます。');update();});
   window.addEventListener('storage',e=>{if(window.ScheduleSync&&e.key===window.ScheduleSync.key(owner))schedule();if(e.key===C.ACTIVE&&raw.getItem(C.ACTIVE)!==owner){stopped=true;token='';location.reload();}});
   const notice=raw.getItem('gijutsushi_drive_notice');
-  update();status(notice|| (owner?'端末内のアカウント別記録を表示しています。保存または読み込みを選んでください。':'未接続です。現在の記録は端末内に保存されています。'));
+  update();status(notice|| (owner?'端末内のアカウント別記録を表示しています。同期を選んでください。':'未接続です。現在の記録は端末内に保存されています。'));
   raw.removeItem('gijutsushi_drive_notice');if(!DRIVE_CLIENT_ID)update();
   prepareSDK().catch(fail);
   }catch(error){

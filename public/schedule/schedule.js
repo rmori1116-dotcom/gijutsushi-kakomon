@@ -14,7 +14,7 @@ function readAppHistory(){if((window.localStorage.getItem(DriveStudyCore.ACTIVE)
 function launchApp(task){const token=crypto.randomUUID();try{sessionStorage.setItem('gijutsushi_schedule_launch:'+token,JSON.stringify({owner:appStorage.owner,at:Date.now(),ids:task.ids.map(q=>q.id),topicId:task.topicId||null}));location.href='../index.html?scheduleTask='+encodeURIComponent(token);}catch(e){tell('アプリを開けませんでした。ブラウザーの保存設定を確認してください。');}}
 function startPractice(task){if(state.source==='app'){launchApp(task);return;}}
 function validGoal(g){return !!g&&Number.isFinite(g.createdAt)&&Number.isFinite(g.remaining)&&P.validDay(g.start)&&P.validDay(g.finish)&&g.baseline&&Array.isArray(g.rows);}
-function reloadPlan(){if(tab==='settings'&&settingsDirty){tell('別の端末の設定が届いています。入力中の内容はそのままです。保存すると入力した目標を使います。');return;}try{const next=JSON.parse(localStorage.getItem(KEY)||'null');if(next?.config&&!P.validate(next.config)){state={...state,...next,source:'app',history:state.history,goal:validGoal(next.goal)?next.goal:null};render();}}catch(e){tell('同期した設定を読み込めませんでした。再読み込みしてください。');}}
+function reloadPlan(){if(tab==='settings'&&settingsDirty){tell('別の端末の設定が届いています。入力中の内容はそのままです。保存すると入力した目標を使います。');return;}try{const next=JSON.parse(localStorage.getItem(KEY)||'null');if(next?.config&&!P.validate(next.config)){state={...state,...next,source:'app',history:state.history,goal:validGoal(next.goal)?next.goal:null};}render();}catch(e){tell('同期した設定を読み込めませんでした。再読み込みしてください。');}}
 function render(){
  const now=P.day(new Date());if(now!==today){if(selected===today)selected=now;today=now;}
  if(state.source==='app')readAppHistory();
