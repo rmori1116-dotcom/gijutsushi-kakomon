@@ -1,0 +1,808 @@
+:root{
+  --bg:#f3f6fb; --card:#fff; --line:#dce4f0; --text:#1a2940; --sub:#64748b;
+  --accent:#2b63d9; --accent-d:#1648a8; --ok:#0f8a4f; --ok-bg:#e8f7ee;
+  --ng:#c62828; --ng-bg:#fdeced; --warn:#b26a00; --warn-bg:#fff6e5;
+  --radius:16px; --shadow:0 1px 2px rgba(19,43,84,.04),0 12px 32px rgba(19,43,84,.055);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",YuGothic,"Noto Sans JP",Meiryo,sans-serif;
+  font-size:16px; line-height:1.75; padding-bottom:80px;
+}
+.wrap{max-width:1020px;margin:0 auto;padding:0 18px}
+header{
+  background:var(--card); color:var(--text);
+  padding:10px 0; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50;
+}
+header .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0;font-weight:700;letter-spacing:.02em}
+header .badge{font-size:.7rem;background:#eaf1ff;color:var(--accent-d);padding:3px 9px;border-radius:99px;white-space:nowrap}
+header .spacer{flex:1}
+header button{
+  background:var(--bg);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:6px 12px;font-size:.8rem;cursor:pointer;font-family:inherit;
+}
+header button:hover{background:#eaf1ff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin:16px 0}
+h2{font-size:1rem;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+h3{font-size:.88rem;margin:18px 0 8px;color:var(--sub);font-weight:700}
+label.fieldlabel{display:block;font-size:.8rem;color:var(--sub);font-weight:700;margin:14px 0 7px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--line);
+  border-radius:99px;padding:7px 14px;font-size:.83rem;cursor:pointer;user-select:none;transition:.15s;
+}
+.chip:hover{border-color:#b9c4d6}
+.chip input{margin:0;accent-color:var(--accent);cursor:pointer}
+.chip.on{border-color:var(--accent);background:#eaf2ff;color:var(--accent-d);font-weight:700}
+.chip.dim{opacity:.45;cursor:not-allowed}
+.chip.zero{border-style:dashed;color:var(--sub)}
+.topicRow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.84rem}
+.topicRow:last-child{border-bottom:none}
+.topicRow .meta{display:block}
+.progressGroup{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.progressGroup>summary{cursor:pointer;font-weight:700;color:var(--accent-d)}
+.progressGroup>summary small{display:block;margin-top:3px;font-weight:400;color:var(--sub)}
+.progressGroupBody{padding-top:8px}
+.recommendationCard{border:1px solid var(--accent);border-left:4px solid var(--accent);border-radius:16px;background:var(--card);color:var(--text);padding:18px 20px;margin:16px 0}
+.recommendationCard h3{margin:0 0 6px;color:var(--accent-d);font-size:1rem}
+.recommendationCard strong{display:block;font-size:1.04rem;line-height:1.55}
+.recommendationCard p{margin:6px 0 12px;font-size:.87rem;color:var(--sub)}
+.recommendationActions{display:flex;flex-wrap:wrap;gap:8px}
+.learningControls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.workspaceNav{display:flex;gap:8px;margin:16px 0}
+.workspaceNav button{flex:1;min-width:0}
+.workspaceNav small{display:block;font-size:.7rem;font-weight:400}
+.homePaths.studyPaths{grid-template-columns:repeat(2,minmax(0,1fr))}
+.startBar{position:sticky;bottom:0;z-index:3;background:var(--card);padding:12px 0;margin-bottom:0}
+@media(max-width:600px){.homePaths.studyPaths{grid-template-columns:1fr}}
+.learningControls select{min-width:150px;flex:1}
+.learningBadge{display:inline-block;font-size:.76rem;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--sub);margin:4px 0}
+.learningBadge.weak{background:var(--ng-bg);color:var(--ng)}
+.learningBadge.strong{background:var(--ok-bg);color:var(--ok)}
+.answerLogRow{padding:12px 0;border-top:1px dashed var(--line);font-size:.86rem;line-height:1.7}
+.answerLogRow strong,.answerLogRow small{display:block}
+.questionTextbookAction{margin-top:14px;padding:13px 15px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.questionTextbookAction .meta{display:block;margin-top:5px}
+.frequencyControls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.frequencyRow{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px dashed var(--line)}
+.frequencyRow:last-child{border-bottom:0}
+.frequencyRow strong{display:block;line-height:1.5}
+.frequencyRow .meta{font-size:.78rem}
+.frequencyBadge{display:inline-block;margin:5px 0;padding:2px 9px;border-radius:99px;background:var(--ok-bg);color:var(--ok);font-size:.74rem;font-weight:700}
+.frequencyYears{font-size:.78rem;color:var(--sub);margin-top:4px}
+.frequencyYears summary{cursor:pointer;color:var(--accent-d)}
+.frequencyYears div{padding:4px 0;overflow-wrap:anywhere}
+#frequencyCard{scroll-margin-top:80px}
+@media(max-width:600px){.frequencyRow{flex-direction:column}.frequencyRow .recommendationActions{width:100%}.frequencyRow .recommendationActions .btn{flex:1}}
+.searchResults .hitCard{margin-top:8px}
+input[type=search]{font-family:inherit;font-size:.9rem;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);flex:1;min-width:180px}
+select,input[type=number]{
+  font-family:inherit;font-size:.9rem;padding:9px 11px;border:1.5px solid var(--line);
+  border-radius:8px;background:#fff;color:var(--text);min-width:150px;
+}
+.btn{
+  font-family:inherit;font-size:.95rem;font-weight:700;border:none;border-radius:10px;
+  padding:13px 26px;cursor:pointer;transition:.15s;
+}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(31,111,235,.3)}
+.btn-primary:hover{background:var(--accent-d)}
+.btn-primary:disabled{background:#b6c2d6;box-shadow:none;cursor:not-allowed}
+.btn-ghost{background:#fff;color:var(--text);border:1.5px solid var(--line);font-weight:600}
+.btn-ghost:hover{border-color:#b9c4d6;background:#f8fafc}
+.btn-sm{padding:8px 16px;font-size:.83rem}
+.quickActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.quickActions .btn{text-align:left;padding:14px 16px}
+.quickActions .btn small{display:block;font-size:.76rem;font-weight:400;line-height:1.5;margin-top:2px;opacity:.85}
+.quickActions .btn:disabled{opacity:.5;cursor:not-allowed}
+.fsz{display:inline-flex;align-items:center;gap:4px}
+.fsz span{font-size:.72rem;min-width:2.6em;text-align:center}
+.fsz button:disabled{opacity:.4;cursor:default}
+.qnum{font-size:calc(1.02rem*var(--qs,1))}
+.qtext{font-size:calc(.98rem*var(--qs,1))}
+.choice{font-size:calc(.94rem*var(--qs,1))}
+.explain .body{font-size:calc(.92rem*var(--qs,1))}
+.note{font-size:calc(.83rem*var(--qs,1))}
+.hitCard .qt{font-size:calc(.87rem*var(--qs,1))}
+.bookGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.bookTile{width:100%;text-align:left;display:block;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:17px;color:var(--text);font:inherit;cursor:pointer;min-height:78px}
+.bookTile:hover,.bookTile:focus-visible{border-color:var(--accent);background:#f7faff}
+.bookTile strong,.bookTile small{display:block}
+.bookTile small{font-size:.78rem;color:var(--sub);margin-top:5px}
+.bookCrumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.82rem;margin:14px 0;color:var(--sub)}
+.bookCrumbs button{border:0;background:none;color:var(--accent-d);font:inherit;cursor:pointer;padding:5px}
+.bookArticle{max-width:760px;margin:0 auto}
+.bookArticle h2{font-size:1.45rem;line-height:1.5}
+.bookArticle h3{font-size:1.08rem;color:var(--text);margin-top:28px}
+.bookArticle p,.bookArticle li{font-size:calc(1rem*var(--qs,1));line-height:1.95;overflow-wrap:anywhere}
+.bookQuestion{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding:12px 0}
+.bookQuestion .meta{display:block}
+.bookQuestionUnit{border-top:1px solid var(--line)}
+.bookQuestionUnit .bookQuestion{border-top:0}
+.bookArticle .bookQuestionText{margin:0 0 12px;font-size:calc(.9rem*var(--qs,1));line-height:1.7}
+.bookSectionQuestions{display:block;margin:14px 0 24px;font-size:.86rem}
+#bookQuestionsHeading{scroll-margin-top:85px}
+.bookStudyActions{margin:12px 0 22px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.bookStudyButtons{display:flex;flex-wrap:wrap;gap:8px}
+.bookStudyButtons .btn:disabled,.bookRandomStudy .btn:disabled{opacity:.5;cursor:not-allowed}
+.bookStudyActions .meta{margin:0 0 12px;display:block}
+.bookRandomStudy{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.bookRandomStudy label{font-weight:600}
+.bookRandomStudy input{width:80px;min-width:0;background:var(--card);color:var(--text)}
+@media(max-width:600px){.bookStudyButtons{display:grid;grid-template-columns:1fr}.bookStudyButtons .btn{text-align:left}.bookRandomStudy .btn{flex:1;min-height:44px}}
+.bookFacts{margin:0 0 12px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.bookFacts summary{cursor:pointer;color:var(--accent-d);font-weight:600;line-height:1.6}
+.bookFacts ul{margin:8px 0 4px;padding-left:1.35em}
+.bookFacts li{font-size:calc(.9rem*var(--qs,1));line-height:1.75;margin:4px 0}
+.bookEmpty{color:var(--sub);background:#f8fafc;padding:16px;border-radius:10px}
+.bookFormula{background:#edf4ff;border-left:4px solid var(--accent);border-radius:8px;padding:14px 18px;white-space:pre-wrap;font-size:calc(1.08rem*var(--qs,1));overflow-wrap:anywhere}
+.bookFormulaGuide{margin:12px 0 20px;border:1px solid var(--line);border-radius:12px;background:#f8fbff}
+.bookFormulaGuide>summary{cursor:pointer;padding:13px 16px;color:var(--accent-d);font-weight:700;line-height:1.6}
+.bookFormulaGuideBody{padding:0 16px 16px}
+.bookArticle .bookFormulaGuideProgress{font-size:.78rem;color:var(--sub);margin:0 0 4px}
+.bookFormulaGuideTitle{font-size:.98rem;font-weight:700;margin:0 0 8px}
+.bookFormulaGuideText{white-space:pre-wrap;line-height:1.8;margin:0 0 14px}
+.bookFormulaGuideNav{display:flex;gap:8px;flex-wrap:wrap}
+.bookSteps{padding-left:1.6em}
+.bookExamples{margin-top:28px}
+.bookExample{margin:16px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.bookExamplePrompt{padding:16px}
+.bookArticle .bookExample h4{margin:0 0 8px;font-size:calc(1rem*var(--qs,1));line-height:1.65;color:var(--text)}
+.bookExamplePrompt p{margin:0;white-space:pre-wrap}
+.bookExampleSolution{border-top:1px solid var(--line)}
+.bookExampleSolution>summary{padding:13px 16px;cursor:pointer;font-weight:700;color:var(--accent-d);min-height:44px;background:var(--bg)}
+.bookExampleSolution>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.bookExampleSolutionBody{padding:16px}
+.bookExampleSolutionBody p{margin:10px 0;white-space:pre-wrap}
+.bookExampleAnswer{border-left:4px solid var(--ok);background:var(--ok-bg);padding:12px 14px;border-radius:8px;color:var(--text);white-space:pre-wrap}
+.bookExampleCheck{padding:12px 14px;background:var(--bg);border-radius:8px}
+#bookExamplesHeading{scroll-margin-top:85px}
+.bookTableWrap{overflow-x:auto;margin:16px 0;-webkit-overflow-scrolling:touch}
+.bookTable{border-collapse:collapse;width:100%;min-width:max-content;font-size:calc(.95rem*var(--qs,1));line-height:1.7}
+.bookTable caption{caption-side:top;text-align:left;font-size:.85rem;color:var(--sub);padding:0 0 6px}
+.bookTable th,.bookTable td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;white-space:normal;max-width:22em}
+.bookTable thead th{background:#edf4ff}
+.bookTable tbody th{background:#f8fafc;font-weight:600}
+.bookFigure{margin:18px 0;text-align:center}.bookFigure img{max-width:100%;height:auto}.bookFigure figcaption{font-size:.8rem;color:var(--sub)}
+.bookBack{margin:14px 0}
+@media(max-width:600px){.bookGrid{grid-template-columns:1fr}.bookQuestion .btn{width:100%;min-height:44px}}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.progress{height:7px;background:#e4e9f2;border-radius:99px;overflow:hidden;margin:12px 0 4px}
+.progress>div{height:100%;background:linear-gradient(90deg,#1f6feb,#4d95ff);border-radius:99px;transition:width .3s}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--sub);align-items:center}
+.meta b{color:var(--text)}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:6px;background:#eef2f8;color:var(--sub);margin-right:6px}
+.tag.sub{background:#eaf2ff;color:var(--accent-d)}
+.qnum{font-size:1.02rem;font-weight:700;margin:12px 0 10px}
+.qtext{white-space:pre-wrap;word-break:break-word;font-size:.98rem;margin-bottom:18px}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choiceOriginal{display:block;margin-top:6px;color:var(--sub);font-size:.75rem;font-weight:400}
+.choiceShuffleNotice{font-size:.84rem;color:var(--accent-d);line-height:1.7;margin:10px 0}
+.choice{
+  display:flex;gap:12px;align-items:flex-start;background:#fff;border:1.5px solid var(--line);
+  border-radius:10px;padding:13px 15px;cursor:pointer;transition:.13s;text-align:left;
+  font-family:inherit;font-size:.94rem;line-height:1.7;color:var(--text);width:100%;
+}
+.choice:hover:not(.locked){border-color:var(--accent);background:#f7faff}
+.choice .no{
+  flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#eef2f8;color:var(--sub);
+  display:flex;align-items:center;justify-content:center;font-size:.83rem;font-weight:700;margin-top:1px;
+}
+.choice .txt{flex:1;white-space:pre-wrap;word-break:break-word}
+.choice.picked{border-color:var(--accent);background:#eaf2ff}
+.choice.picked .no{background:var(--accent);color:#fff}
+.choice.correct{border-color:var(--ok);background:var(--ok-bg)}
+.choice.correct .no{background:var(--ok);color:#fff}
+.choice.wrong{border-color:var(--ng);background:var(--ng-bg)}
+.choice.wrong .no{background:var(--ng);color:#fff}
+.choice.locked{cursor:default}
+.choice:disabled{opacity:1}
+.verdict{margin:18px 0 0;padding:14px 16px;border-radius:10px;font-weight:700;font-size:.95rem}
+.verdict.ok{background:var(--ok-bg);color:var(--ok);border:1.5px solid #a8ddbf}
+.verdict.ng{background:var(--ng-bg);color:var(--ng);border:1.5px solid #f0b4b6}
+.verdict.na{background:var(--warn-bg);color:var(--warn);border:1.5px solid #f0d59a}
+.explain{margin-top:14px;padding:16px;background:#f8fafc;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px}
+.explain .ttl{font-size:.78rem;font-weight:700;color:var(--accent-d);margin-bottom:7px;letter-spacing:.04em}
+.explain .body{font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.explainFigs{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.explainFigs summary{cursor:pointer;font-size:.86rem;font-weight:700;color:var(--accent-d)}
+.explainFig{margin:10px 0 0}
+.explainFig img{display:block;max-width:100%;height:auto;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:8px;cursor:zoom-in}
+.explainFig figcaption{font-size:.8rem;color:var(--sub);margin-top:6px;line-height:1.55}
+.basicsDetails{margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.basicsDetails summary{cursor:pointer;font-weight:700;color:var(--accent-d)}
+.basicsDetails ul{margin:12px 0 0;padding-left:1.5em}
+.basicsDetails li{margin:0 0 10px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.basicsDetails li:last-child{margin-bottom:0}
+.note{margin-top:12px;padding:12px 14px;background:var(--warn-bg);border:1px solid #f0d59a;border-radius:8px;font-size:.83rem;color:#7a4c00}
+.note .ttl{font-weight:700;margin-bottom:4px}
+.nav{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.nav .btn{flex:1;min-width:120px}
+.hide{display:none!important}
+.figbox{margin:0 0 18px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:10px;text-align:center}
+.figbox img{max-width:100%;height:auto;cursor:zoom-in;display:inline-block}
+.figbox figcaption{font-size:.74rem;color:var(--sub);margin-top:8px}
+#zoomOv{
+  position:fixed;inset:0;background:rgba(15,22,34,.9);z-index:200;display:flex;align-items:center;
+  justify-content:center;padding:16px;cursor:zoom-out;
+}
+#zoomOv img{max-width:100%;max-height:100%;background:#fff;border-radius:6px}
+#zoomOv .tip{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:.78rem}
+table.result{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+table.result th,table.result td{border:1px solid var(--line);padding:9px 10px;text-align:left}
+table.result th{background:#f4f6f9;font-weight:700;font-size:.8rem;color:var(--sub)}
+table.result td.c{text-align:center;white-space:nowrap}
+table.result tr.miss td{background:#fdf5f5}
+.score{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 18px}
+.score .box{flex:1;min-width:110px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+.score .box .v{font-size:1.7rem;font-weight:700;line-height:1.2}
+.score .box .l{font-size:.74rem;color:var(--sub);margin-top:2px}
+.score .box.pass .v{color:var(--ok)}
+.score .box.fail .v{color:var(--ng)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:7px;margin-top:10px}
+.grid button{
+  font-family:inherit;font-size:.72rem;padding:8px 2px;border:1.5px solid var(--line);background:#fff;
+  border-radius:7px;cursor:pointer;color:var(--sub);font-weight:700;
+}
+.grid button.done{background:#eaf2ff;border-color:#a9c8fa;color:var(--accent-d)}
+.grid button.ok{background:var(--ok-bg);border-color:#a8ddbf;color:var(--ok)}
+.grid button.ng{background:var(--ng-bg);border-color:#f0b4b6;color:var(--ng)}
+.grid button.now{outline:2.5px solid var(--accent);outline-offset:1px}
+.stats{font-size:.85rem}
+.stats .line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line)}
+.stats .line:last-child{border-bottom:none}
+.empty{text-align:center;color:var(--sub);padding:34px 10px;font-size:.9rem}
+.hitCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:10px;background:#fafbfd}
+.hitCard .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.hitCard .qt{font-size:.87rem;color:var(--text);white-space:pre-wrap;word-break:break-word}
+footer{text-align:center;font-size:.74rem;color:var(--sub);padding:24px 14px 10px;line-height:1.9}
+footer a{color:var(--accent)}
+@media(max-width:600px){
+  body{font-size:15px}
+  .card{padding:15px;border-radius:10px}
+  header h1{font-size:.92rem}
+  .qtext{font-size:calc(.94rem*var(--qs,1))}
+  .choice{padding:11px 12px;font-size:calc(.9rem*var(--qs,1))}
+  .nav .btn{min-width:100%}
+  .score .box .v{font-size:1.4rem}
+  .quickActions{grid-template-columns:1fr}
+  header .badge{display:none}
+}
+/* 学習ホームと詳細設定 */
+#setup{padding:10px 0 24px}
+#quiz,#result{max-width:860px;margin:0 auto}
+#setup>.card,#quiz>.card,#result>.card{margin:14px 0;border-radius:18px}
+#setup h2{border:0;padding:0;margin:3px 0 10px;font-size:1.13rem;line-height:1.45;color:var(--text)}
+.sectionEyebrow{font-size:.68rem;font-weight:800;letter-spacing:.13em;color:var(--accent-d);line-height:1.2}
+.homeHero{position:relative;overflow:hidden;padding:26px 28px!important;border-color:#cbdafa!important;background:linear-gradient(125deg,#fff 48%,#edf4ff)}
+.homeHero::before{content:"";position:absolute;top:0;left:0;bottom:0;width:5px;background:var(--accent)}
+.homeHero h2{font-size:1.55rem!important;margin:7px 0 3px!important}
+.heroLead,.cardLead{color:var(--sub);font-size:.86rem;margin:0 0 18px}
+.homeHero .quickActions{gap:12px}
+.homeHero .quickActions .btn{min-height:82px;padding:17px 20px;border-radius:12px;font-size:1.02rem}
+.homeHero .quickActions .btn-primary{background:linear-gradient(115deg,#285fcd,#16499f);box-shadow:0 6px 18px rgba(31,91,190,.2)}
+.homeHero .quickActions .btn small{font-size:.76rem;margin-top:4px}
+.heroBottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:1px solid var(--line);font-size:.79rem;color:var(--sub)}
+.textButton{border:0;background:transparent;color:var(--accent-d);font:inherit;font-weight:800;cursor:pointer;padding:5px 0}
+.textButton:hover{text-decoration:underline}
+.searchControls{display:grid;grid-template-columns:minmax(220px,2fr) minmax(135px,1fr) minmax(155px,1fr);gap:9px}
+.searchControls>*{width:100%;min-width:0!important}
+.searchCard{padding:22px 26px!important}
+.searchCard input[type=search]{border-color:#b7c9e8;background:var(--card);font-size:.95rem}
+.searchCard input[type=search]:focus{outline:2px solid #8eb4fa;outline-offset:1px}
+.searchResults{max-height:440px;overflow:auto}
+.predictionCard{padding:22px 26px!important}
+.predictionCard .row{margin-top:14px}
+.nonofficial{font-size:.68rem;color:var(--sub);font-weight:700;border:1px solid var(--line);padding:3px 8px;border-radius:99px;vertical-align:middle;white-space:nowrap}
+.settingsPanel{margin:14px 0;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:84px}
+.settingsSummary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;cursor:pointer}
+.settingsSummary::-webkit-details-marker,.subSettings>summary::-webkit-details-marker{display:none}
+.settingsSummary>span:first-child{display:flex;flex-direction:column;gap:4px}
+.settingsSummary strong{font-size:1.15rem;line-height:1.5}
+.settingsSummary small{font-size:.78rem;color:var(--sub);font-weight:400}
+.summaryArrow{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:#edf3ff;display:grid;place-items:center;color:var(--accent-d);font-size:1.35rem;line-height:1;transition:transform .2s}
+.settingsPanel[open] .summaryArrow{transform:rotate(180deg)}
+.settingsBody{border-top:1px solid var(--line);padding:8px 26px 26px}
+.settingsBody .fieldlabel{font-size:.86rem;color:var(--text);margin:22px 0 8px}
+.settingsBody .chips{gap:7px}
+.settingsBody .chip{font-size:.8rem;padding:8px 12px}
+.settingsBody select{flex:1;min-width:180px}
+.subSettings{border:1px solid var(--line);border-radius:11px;padding:0 14px;margin-top:13px;background:var(--card)}
+.subSettings>summary{list-style:none;padding:12px 0;cursor:pointer;color:var(--accent-d);font-weight:750;font-size:.88rem}
+.subSettings>summary::before{content:"›";display:inline-block;margin-right:8px;transition:transform .2s}
+.subSettings[open]>summary::before{transform:rotate(90deg)}
+.subSettings>summary small{color:var(--sub);font-weight:400;font-size:.72rem;margin-left:8px}
+.subSettings[open]{padding-bottom:14px}
+.compactDetails{margin-top:18px}
+.startBar{margin-top:24px;padding:16px 0 0;border-top:1px solid var(--line)}
+.startBar #btnStart{min-width:180px}
+.mistakeControl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+.mistakeControl select{max-width:100%;min-height:44px}
+.comparisonCard{padding:14px 0;border-bottom:1px solid var(--line)}
+.comparisonCard>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center;gap:8px}
+.comparisonCard>summary::before{content:'＋';color:var(--accent)}
+.comparisonCard[open]>summary::before{content:'−'}
+.comparisonBody{margin-top:12px}
+.comparisonFigure{margin:14px 0;overflow-x:auto}
+.comparisonFigure img{display:block;width:100%;min-width:520px;border-radius:8px}
+.comparisonFigure figcaption{font-size:.8rem;color:var(--sub);margin-top:5px}
+.comparisonGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.comparisonGrid p{overflow-wrap:anywhere}
+@media(max-width:600px){.comparisonGrid{grid-template-columns:1fr}}
+#recordCard .stats{margin-top:4px}
+#recordCard .line{gap:10px}
+#recordCard .line span:last-child{text-align:right}
+.resumeCard{border-color:#a8c3f8!important;background:#f3f7ff}
+#quiz>.card{padding:28px}
+#quiz .qtext{font-size:calc(1.03rem*var(--qs,1));line-height:1.9}
+#quiz .choice{font-size:calc(.98rem*var(--qs,1));padding:15px 17px}
+#quiz .qnum{font-size:1.1rem}
+.btn:focus-visible,.chip:focus-within,.textButton:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:700px){
+  .searchControls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .searchControls input[type=search]{grid-column:1/-1}
+  #quiz>.card{padding:18px}
+  .settingsBody{padding:8px 18px 20px}
+}
+@media(max-width:600px){
+  header{padding:8px 0}
+  header .wrap{gap:7px}
+  header h1{font-size:.83rem;max-width:55%;line-height:1.3}
+  header button{padding:6px 8px;font-size:.73rem}
+  .homeHero{padding:22px 18px!important}
+  .homeHero h2{font-size:1.35rem!important}
+  .homeHero .quickActions .btn{min-height:69px;padding:12px 15px}
+  .heroBottom{align-items:flex-start}
+  .searchCard,.predictionCard{padding:19px 17px!important}
+  .settingsSummary{padding:19px 17px}
+  .settingsBody .row select{width:100%}
+  .startBar #btnStart{width:100%}
+  .topicRow{align-items:flex-start;flex-direction:column}
+  #quiz .qtext{font-size:calc(.98rem*var(--qs,1))}
+}
+/* ============================================================
+   手書きメモ（固定サイズのフリーボード・二本指で移動／拡大縮小）
+   ・表示形態は3つ: float=独立ウィンドウ / dock-side=左右分割 / dock-bottom=上下分割
+   ・分割時は body に padding を足して本文が隠れないようにする
+   ============================================================ */
+#memo{
+  position:fixed; z-index:150; background:var(--card); border:1px solid var(--line);
+  box-shadow:0 6px 30px rgba(20,30,50,.18); display:flex; flex-direction:column;
+  overflow:hidden; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+}
+body.memo-interacting, body.memo-interacting *{
+  user-select:none!important; -webkit-user-select:none!important; -webkit-touch-callout:none!important;
+}
+#memoBar, #memoGrip{ touch-action:none }
+#memo[data-mode="float"]{ border-radius:12px; }
+#memo[data-mode="dock-side"]{ top:0; right:0; bottom:0; border-radius:0; border-width:0 0 0 1px; }
+#memo[data-mode="dock-bottom"]{ left:0; right:0; bottom:0; border-radius:0; border-width:1px 0 0; }
+body.memo-side{ padding-right:var(--memo-w,42%); }
+body.memo-bottom{ padding-bottom:var(--memo-h,45%); }
+
+#memoBar{
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:7px 9px;
+  background:linear-gradient(135deg,#1f6feb,#0b3f96); color:#fff; flex:0 0 auto;
+}
+#memo[data-mode="float"] #memoBar{ cursor:move; }
+#memoBar .ttl{ font-size:.78rem; font-weight:700; white-space:nowrap; margin-right:2px }
+#memoBar .sp{ flex:1 }
+#memoBar button{
+  background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.34);
+  border-radius:7px; padding:5px 9px; font-size:.75rem; cursor:pointer; font-family:inherit;
+  line-height:1.2; white-space:nowrap;
+}
+#memoBar button:hover{ background:rgba(255,255,255,.3) }
+#memoBar button.on{ background:#fff; color:var(--accent-d); font-weight:700 }
+#memoBar .pen{ width:24px; height:24px; padding:0; border-radius:50%; position:relative }
+#memoBar .pen.on{ outline:2.5px solid #fff; outline-offset:1px }
+#memoBar .w{ width:26px; padding:5px 0; text-align:center }
+#memoBar .grp{ display:flex; gap:4px; align-items:center }
+#memoBar .sep{ width:1px; height:18px; background:rgba(255,255,255,.35); margin:0 2px }
+
+#memoScroll{ flex:1 1 auto; position:relative; overflow:hidden; background:#fcfcfa; min-height:80px; touch-action:none }
+#memoCanvas{ position:absolute; left:0; top:0; display:block; touch-action:none; cursor:crosshair;
+  user-select:none; -webkit-user-select:none }
+#memoFoot{
+  flex:0 0 auto; display:flex; align-items:center; flex-wrap:wrap; gap:6px 8px; padding:5px 9px;
+  border-top:1px solid var(--line); font-size:.7rem; color:var(--sub); background:#f8fafc;
+}
+#memoFoot button{
+  background:#fff; border:1px solid var(--line); border-radius:6px; padding:4px 9px;
+  font-size:.7rem; font-family:inherit; cursor:pointer; color:var(--text);
+}
+#memoFoot .hint{ flex-basis:100%; opacity:.85 }
+#memoGrip{ position:absolute; z-index:2; background:transparent }
+#memo[data-mode="float"] #memoGrip{ right:0; bottom:0; width:20px; height:20px; cursor:nwse-resize }
+#memo[data-mode="dock-side"] #memoGrip{ left:0; top:0; bottom:0; width:7px; cursor:ew-resize }
+#memo[data-mode="dock-bottom"] #memoGrip{ left:0; right:0; top:0; height:7px; cursor:ns-resize }
+#btnMemo.has::after{
+  content:''; position:absolute; top:3px; right:3px; width:7px; height:7px;
+  border-radius:50%; background:#ffd54a;
+}
+#btnMemo{ position:relative }
+#calculator{position:fixed;z-index:160;left:16px;top:90px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 16px);display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 32px rgba(20,30,50,.22);overflow:hidden;user-select:none;-webkit-user-select:none}
+#calcBar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--accent-d);color:#fff;cursor:move;touch-action:none;flex-shrink:0}
+#calcTitle{font-size:.9rem;margin:0}
+#calcClose{border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:7px;font:inherit;padding:5px 10px;cursor:pointer;min-height:36px}
+#calcBody{padding:12px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.calcScreen{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:10px}
+#calcStatus{height:22px;font-size:.74rem;color:var(--sub);line-height:1.5}
+#calcDisplay{display:block;text-align:right;font-family:ui-monospace,Consolas,monospace;font-size:1.8rem;line-height:1.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.calcKeys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.calcKeys button{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font:inherit;font-size:1.05rem;font-weight:600;cursor:pointer;touch-action:manipulation}
+.calcKeys button:hover{background:var(--bg)}
+.calcKeys button:active{transform:translateY(1px)}
+.calcKeys .calcFunction{background:var(--bg);color:var(--accent-d);font-size:.9rem}
+.calcKeys .calcEquals{background:var(--accent);color:#fff}
+.calcHelp{margin-top:10px;font-size:.74rem;color:var(--sub);line-height:1.6;user-select:text}
+.calcHelp summary{cursor:pointer;color:var(--accent-d)}
+.calcHelp p{margin:6px 0}
+#btnCalc[aria-expanded="true"]{border-color:var(--accent);color:var(--accent-d);font-weight:700}
+#calculator:focus-visible,.calcKeys button:focus-visible,#calcClose:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+@media(max-width:600px){
+  #memoBar{ padding:6px }
+  #memoBar button{ padding:5px 7px; font-size:.72rem }
+  #memoBar .ttl{ font-size:.72rem }
+}
+/* 学習の入口を「理解する・解く・試す」の3択に整理した画面 */
+:root{
+  --bg:#f5f7f4;--card:#fff;--line:#dbe5e0;--text:#1a302e;--sub:#5c716c;
+  --accent:#147b68;--accent-d:#0d5e51;--shadow:0 1px 2px rgba(18,55,44,.035),0 10px 30px rgba(18,55,44,.045);
+}
+body{background:var(--bg)}
+header{background:#fff;box-shadow:0 1px 0 rgba(16,65,52,.025)}
+header h1{display:flex;align-items:baseline;gap:9px;font-size:1rem;letter-spacing:.01em}
+.brandSub{color:var(--sub);font-size:.72rem;font-weight:600;letter-spacing:0}
+header .badge{background:#eaf5f0;color:var(--accent-d)}
+header button:hover{background:#edf6f1}
+.wrap{max-width:1080px}
+#setup{max-width:980px;margin:0 auto;padding-top:22px}
+.card,.settingsPanel,.homeMore{border-radius:20px}
+.sectionEyebrow{color:var(--accent-d);letter-spacing:.1em}
+.homeHero{padding:29px 30px 22px!important;border:1px solid var(--line)!important;background:#fff;box-shadow:var(--shadow)}
+.homeHero::before{display:none}
+.homeHero h2{font-size:1.75rem!important;letter-spacing:-.035em;margin:7px 0 5px!important}
+.heroLead{font-size:.9rem;margin-bottom:21px}
+.homePaths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.homePath{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-height:176px;width:100%;padding:18px 18px 16px;text-align:left;font:inherit;color:var(--text);background:#fff;border:1.5px solid var(--line);border-radius:16px;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.homePath:hover{transform:translateY(-2px);border-color:#8ab9a8;box-shadow:0 12px 26px rgba(24,84,66,.09)}
+.homePath:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.homePathLearn{background:#eaf5ef;border-color:#b9dcca}
+.homePathMark{display:inline-grid;place-items:center;min-width:31px;height:31px;border-radius:9px;background:#e8eee9;color:var(--accent-d);font-size:.7rem;font-weight:800;letter-spacing:.03em}
+.homePathLearn .homePathMark{background:var(--accent);color:#fff}
+.homePathLabel{font-size:.73rem;color:var(--sub);font-weight:700;margin-top:12px;line-height:1.3}
+.homePath strong{font-size:1.13rem;line-height:1.45;margin-top:2px;letter-spacing:-.02em}
+.homePath small{font-size:.76rem;color:var(--sub);line-height:1.5;margin-top:4px;padding-right:20px}
+.homePathArrow{position:absolute;right:16px;bottom:13px;font-size:1.15rem;color:var(--accent-d)}
+.homePath .nonofficial{font-size:.61rem;padding:1px 5px;margin-left:4px}
+.homeShortcuts{display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center;margin-top:19px}
+.homeShortcuts .textButton{font-size:.83rem;padding:6px 0;text-align:left}
+.homeShortcuts .textButton small{display:block;color:var(--sub);font-size:.72rem;font-weight:400}
+.homeShortcuts .textButton:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
+.heroBottom{margin-top:14px;padding-top:12px;justify-content:flex-start}
+.homeMore{margin:10px 0;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.homeMore>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;cursor:pointer}
+.homeMore>summary::-webkit-details-marker{display:none}
+.homeMore>summary>span:first-child{display:flex;flex-direction:column;gap:2px}
+.homeMore>summary strong{font-size:.97rem;line-height:1.5}
+.homeMore>summary small{font-size:.75rem;color:var(--sub)}
+.homeMore[open]>.homeMoreBody{border-top:1px solid var(--line);padding:18px 22px 22px}
+.homeMore[open] .summaryArrow{transform:rotate(180deg)}
+.homeMore .summaryArrow,.settingsPanel .summaryArrow{background:#eaf5ef;color:var(--accent-d)}
+.searchControls{grid-template-columns:minmax(220px,2fr) minmax(135px,1fr) minmax(155px,1fr)}
+.searchCard{padding:0!important}
+.searchCard input[type=search]{border-color:var(--line)}
+.settingsPanel{margin:10px 0}
+.settingsSummary{padding:18px 22px}
+.settingsSummary strong{font-size:.97rem}
+.settingsSummary small{font-size:.75rem}
+.settingsBody{padding:8px 22px 22px}
+.btn-primary{box-shadow:none}
+.btn-primary:hover{background:var(--accent-d)}
+.chip.on,.choice.picked{background:#e9f5ef;border-color:var(--accent);color:var(--accent-d)}
+.choice.picked .no{color:#fff}
+.bookTile{border-color:var(--line);border-radius:15px;min-height:86px;transition:border-color .15s,transform .15s,box-shadow .15s}
+.bookTile:hover,.bookTile:focus-visible{background:#f3faf6;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 7px 18px rgba(18,70,50,.07)}
+.bookFormula{background:#eaf5ef}
+.bookTable thead th{background:#eaf5ef}
+.progress>div{background:var(--accent)}
+.quizUtility{margin-top:14px}
+.quizUtility .btn{font-size:.79rem;padding:8px 12px}
+.quizMore{margin-top:22px;border-top:1px solid var(--line);padding-top:15px}
+.quizMore>summary{cursor:pointer;color:var(--accent-d);font-size:.86rem;font-weight:700;list-style:none;padding:5px 0}
+.quizMore>summary::-webkit-details-marker{display:none}
+.quizMore>summary::before{content:"›";display:inline-block;margin-right:8px;transition:transform .2s}
+.quizMore[open]>summary::before{transform:rotate(90deg)}
+@media(max-width:760px){
+  .homePaths{grid-template-columns:1fr}
+  .homePath{min-height:104px;padding:13px 16px 14px 61px}
+  .homePathMark{position:absolute;left:16px;top:18px}
+  .homePathLabel{margin-top:0}
+  .homePath strong{font-size:1.06rem}
+  .homePath small{margin-top:1px}
+}
+@media(max-width:600px){
+  #setup{padding-top:10px}
+  header h1{font-size:.8rem;max-width:none}
+  .brandSub{display:none}
+  .homeHero{padding:21px 17px 17px!important}
+  .homeHero h2{font-size:1.4rem!important}
+  .homeShortcuts{gap:2px 15px}
+  .homeMore>summary,.settingsSummary{padding:16px 17px}
+  .homeMore[open]>.homeMoreBody{padding:16px 17px 19px}
+  .settingsBody{padding:8px 17px 20px}
+}
+/* ============================================================
+   見やすさの調整（2026-10-12）：表示だけを変える。内容・機能は変更しない
+   ============================================================ */
+/* 解答後の色：選んだ選択肢が不正解なら赤、正解なら緑を優先する */
+.choice.picked.wrong,.choice.wrong{border-color:var(--ng);background:var(--ng-bg);color:var(--text)}
+.choice.picked.wrong .no,.choice.wrong .no{background:var(--ng);color:#fff}
+.choice.picked.correct,.choice.correct{border-color:var(--ok);background:var(--ok-bg);color:var(--text)}
+.choice.picked.correct .no,.choice.correct .no{background:var(--ok);color:#fff}
+/* ヘッダー：広い画面は1行、スマホはタイトルと操作を分けて収める */
+header .wrap{flex-wrap:nowrap}
+header h1{min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .spacer{flex:1 1 0;min-width:0}
+header button{white-space:nowrap;flex:0 0 auto}
+@media(max-width:600px){
+  header .wrap{gap:5px;padding:0 10px;flex-wrap:wrap}
+  header h1{flex:1 1 0}
+  header .spacer{flex:0 0 100%;height:0}
+  header .fsz{margin-left:auto}
+  header button{padding:6px 7px;font-size:.72rem}
+  .fsz{gap:2px}.fsz span{min-width:2.4em;font-size:.66rem}
+}
+.bookLearned{display:flex;align-items:center;gap:10px;min-height:44px;padding:12px;margin:16px 0;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.bookLearned input{width:22px;height:22px;flex:0 0 22px}
+/* 教科書：本文の読みやすさ */
+.bookArticle{padding:28px 30px}
+.bookArticle>p{margin:0 0 1.05em}
+.bookArticle h2{font-size:1.5rem;letter-spacing:-.01em;padding-bottom:14px;margin-bottom:18px}
+.bookArticle>h3{font-size:calc(1.17rem*var(--qs,1));line-height:1.5;color:var(--text);margin:44px 0 14px;padding:3px 0 3px 13px;border-left:4px solid var(--accent);scroll-margin-top:80px}
+/* テーマ内の目次：縦に並べて見出しの一覧として読めるようにする */
+.bookArticle>nav.bookCrumbs{display:block;margin:20px 0 24px;padding:12px 16px 8px;background:#f7faf8;border:1px solid var(--line);border-radius:12px;font-size:.9rem}
+.bookArticle>nav.bookCrumbs::before{content:"このテーマの目次";display:block;font-size:.74rem;font-weight:800;letter-spacing:.08em;color:var(--sub);margin-bottom:4px}
+.bookArticle>nav.bookCrumbs button{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;padding:8px 2px;border-bottom:1px dashed var(--line);border-radius:0;line-height:1.55;font-weight:600;color:var(--accent-d)}
+.bookArticle>nav.bookCrumbs button:last-child{border-bottom:0}
+.bookArticle>nav.bookCrumbs button::before{content:"›";color:var(--accent);font-weight:800}
+.bookArticle>nav.bookCrumbs button:hover{background:#edf6f1}
+/* 先に読むテーマ */
+.bookArticle>.bookEmpty{border:1px solid var(--line);font-size:.85rem}
+.bookArticle>.bookEmpty .btn{display:block;width:100%;margin-top:8px;text-align:left}
+/* 公式：式の途中で改行しない（長い式は横にスクロール） */
+.bookFormula{white-space:pre;overflow-x:auto;overflow-wrap:normal;word-break:normal;line-height:1.9;margin:18px 0 10px;padding:14px 18px;font-variant-numeric:tabular-nums;-webkit-overflow-scrolling:touch}
+/* 例題の手順 */
+.bookSteps{margin:16px 0;padding:14px 18px 14px 2.3em;background:#fbfcfb;border:1px solid var(--line);border-radius:12px}
+.bookSteps li{margin:6px 0;padding-left:2px}
+.bookSteps li::marker{color:var(--accent-d);font-weight:700}
+/* 表 */
+.bookTable caption{font-weight:700;color:var(--text);font-size:.88rem}
+.bookTable th,.bookTable td{padding:8px 11px}
+.bookTable tbody tr:nth-child(even) td{background:#fafcfb}
+/* 図 */
+.bookFigure{margin:20px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.bookFigure img{border-radius:6px}
+.bookFigure figcaption{font-size:.84rem;color:var(--text);margin-top:8px;line-height:1.6}
+/* 節ごとの「全過去問を見る」：本文の流れを切らない控えめな表示 */
+.bookArticle .bookSectionQuestions{display:inline-block;margin:6px 0 4px;padding:6px 2px;border:0;background:none;color:var(--accent-d);font-size:.8rem;font-weight:700}
+.bookArticle .bookSectionQuestions::before{content:"↓ "}
+.bookArticle .bookSectionQuestions:hover{text-decoration:underline;background:none}
+/* 過去問の一覧：1問ずつカードに分ける */
+.bookQuestionUnit{border:1px solid var(--line);border-radius:12px;padding:4px 16px 14px;margin:12px 0;background:#fff}
+.bookQuestionUnit .bookQuestion{padding:12px 0 8px}
+.bookQuestion strong{font-size:1rem}
+.bookQuestion .meta{display:inline-flex;margin:4px 6px 0 0;padding:1px 8px;border-radius:99px;background:var(--bg);font-size:.72rem}
+.bookArticle .bookQuestionText{color:var(--text);margin:0 0 10px}
+.bookFacts{background:#f7faf8}
+@media(max-width:600px){
+  .bookArticle{padding:20px 17px}
+  .bookArticle h2{font-size:1.3rem}
+  .bookArticle>h3{margin-top:36px}
+  .bookFormula{padding:12px 14px;font-size:calc(1rem*var(--qs,1))}
+  .bookQuestion .btn{width:auto;min-height:40px;margin-left:auto}
+  .bookTable{font-size:calc(.9rem*var(--qs,1))}
+}
+@media(min-width:761px){.bookArticle>nav.bookCrumbs{column-count:2;column-gap:28px}.bookArticle>nav.bookCrumbs button{break-inside:avoid}.bookArticle>nav.bookCrumbs::before{column-span:all}.bookArticle>nav.bookCrumbs button:last-child{border-bottom:1px dashed var(--line)}}
+/* ホーム：補助リンクの文字をやや濃くする */
+.homeShortcuts .textButton:disabled{opacity:.6}
+
+/* 学習状況の可視化：数値ラベル付きで色だけに依存しない */
+.homeScope{margin:18px 0}.homeScope select{margin-left:10px}.recommendationList{font-size:.88rem;line-height:1.9;padding-left:24px}
+.chartGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:18px 0}
+.chartPanel{border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0;background:var(--card)}
+.chartPanel h3{margin:0 0 12px;font-size:1rem}.chartPanel h4{margin:10px 0;font-size:.9rem}
+.chartRow{margin:13px 0}.chartRowHead{display:flex;justify-content:space-between;gap:12px;font-size:.85rem;line-height:1.6}.chartRowHead span:last-child{flex-shrink:0}
+.chartTrack{height:12px;background:var(--line);border-radius:6px;overflow:hidden;display:flex;margin-top:6px}.chartFill{height:100%;background:var(--accent)}
+.chartLegend{font-size:.78rem;color:var(--sub);line-height:1.7;margin-top:6px}.chartTotal{font-size:1.5rem;font-weight:700;margin:8px 0}
+.recordTable{max-height:480px;overflow:auto;margin-top:12px}.recordTable table{border-collapse:collapse;width:100%;font-size:.8rem}.recordTable th,.recordTable td{padding:9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.recordTable thead{position:sticky;top:0;background:var(--card)}
+.bookGrid button .chartRow{text-align:left;width:100%;margin:10px 0}.bookGrid button .chartRowHead{font-weight:400}.bookGrid button .chartTrack{height:8px}.bookSelectionBody .bookGrid{margin-top:16px}.dailyChart{display:flex;gap:4px;height:150px;align-items:flex-end;min-width:600px}.dailyCol{flex:1;min-width:14px;text-align:center;font-size:.65rem}.dailyBar{display:flex;flex-direction:column-reverse;justify-content:flex-start;height:110px;background:var(--line);border-radius:3px;overflow:hidden}.dailyBar i{display:block;flex-shrink:0}.dailyScroll{overflow-x:auto;padding-bottom:8px}
+@media(max-width:600px){.chartGrid{grid-template-columns:1fr}.chartRowHead{flex-wrap:wrap;gap:2px}.homeScope select{margin-left:0;width:100%;margin-top:8px}}
+
+
+
+
+/* ============================================================
+   PWA / モバイル向け追加スタイル
+   （build_pwa.py が template.html の <style> の後ろに連結する）
+   ・iPhone のノッチ・ホームバー（セーフエリア）対応
+   ・スマホでは前／次ボタンを画面下に固定
+   ・タップしやすいサイズ、iOSの入力ズーム抑止
+   ・ダークモード（端末の設定に自動追従）
+   ============================================================ */
+
+html{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  min-height:100svh;
+}
+/* iOS Safari で <input> にフォーカスすると 16px 未満は自動ズームされるので封じる */
+input,select,textarea{font-size:16px}
+@media(min-width:601px){
+  select,input[type=number]{font-size:.9rem}
+}
+button,.chip,.choice,summary{touch-action:manipulation}
+
+/* ---------- セーフエリア ---------- */
+header{padding-top:calc(18px + env(safe-area-inset-top))}
+.wrap{
+  padding-left:calc(14px + env(safe-area-inset-left));
+  padding-right:calc(14px + env(safe-area-inset-right));
+}
+body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+
+/* ---------- 画面下に固定する前／次バー（スマホのみ） ---------- */
+@media(max-width:700px){
+  .nav.navfix{
+    position:fixed; left:0; right:0; bottom:0; z-index:60; margin:0;
+    display:flex; gap:10px;
+    padding:10px calc(12px + env(safe-area-inset-left))
+            calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-right));
+    background:color-mix(in srgb, var(--card) 92%, transparent);
+    -webkit-backdrop-filter:saturate(180%) blur(12px);
+    backdrop-filter:saturate(180%) blur(12px);
+    border-top:1px solid var(--line);
+  }
+  .nav.navfix .btn{flex:1;min-width:0;padding:14px 10px;font-size:.95rem}
+  body.quizmode{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+  /* 固定バーの分だけ本文の余白を足す */
+  #quiz .nav.navfix + .nav{margin-top:12px}
+  .choice{padding:14px 13px;min-height:52px;align-items:center}
+  .choice .no{flex:0 0 30px;width:30px;height:30px;font-size:.9rem}
+  .chip{padding:9px 15px;font-size:.86rem}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(42px,1fr))}
+  .grid button{padding:10px 2px}
+  header{position:sticky;top:0}
+  header h1{font-size:.88rem}
+  .btn{padding:13px 18px}
+  /* 「わからない（解説を見る）」はスマホでは押しやすく横幅いっぱいにし、
+     補足文はその下に回す */
+  #qGiveUpRow{flex-direction:column;align-items:stretch;gap:6px}
+  #qGiveUpRow .btn{width:100%;padding:14px 10px;font-size:.95rem}
+  #qGiveUpRow .meta{justify-content:center;font-size:.76rem}
+  /* 基礎知識・類似問題の見出しが埋もれないよう少し間隔をあける */
+  #qBasicsBox,#praSimBox,#praRefBox{margin-top:18px}
+}
+/* 押した瞬間のフィードバック（hoverが無い端末向け） */
+@media(hover:none){
+  .choice:active:not(.locked){transform:scale(.985);border-color:var(--accent);background:#f7faff}
+  .btn:active{transform:scale(.98)}
+  .chip:active{transform:scale(.97)}
+}
+
+/* ---------- 起動時のローディング ---------- */
+#boot{
+  position:fixed; inset:0; z-index:300; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px;
+  background:var(--bg); color:var(--sub); font-size:.9rem; text-align:center; padding:24px;
+}
+#boot .ttl{font-size:1rem;font-weight:700;color:var(--text)}
+#boot .bar{width:min(280px,70vw);height:6px;border-radius:99px;background:#e4e9f2;overflow:hidden}
+#boot .bar>i{display:block;height:100%;width:20%;border-radius:99px;background:var(--accent);
+  animation:bootbar 1.1s ease-in-out infinite}
+@keyframes bootbar{0%{margin-left:-25%}100%{margin-left:100%}}
+#boot.err .bar{display:none}
+#boot .retry{margin-top:6px}
+
+/* ---------- 通知バー（オフライン／更新あり） ---------- */
+#toast{
+  max-width:1000px; margin:12px auto;
+  width:calc(100% - 28px); box-sizing:border-box;
+  background:var(--text); color:#fff; border-radius:12px; padding:12px 14px;
+  font-size:.85rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  box-shadow:0 6px 24px rgba(10,18,32,.28);
+}
+#toast[hidden]{display:none}
+#toast .sp{flex:1;min-width:0;overflow-wrap:anywhere}
+#toast button{
+  font-family:inherit; font-size:.8rem; font-weight:700; border:none; cursor:pointer;
+  background:#fff; color:var(--text); border-radius:8px; padding:7px 13px; min-height:44px; min-width:44px;
+}
+#toast button.ghost{background:transparent;color:#cfd8e6;padding:7px 8px}
+
+/* ---------- オフライン設定カード ---------- */
+.offbar{height:8px;border-radius:99px;background:#e4e9f2;overflow:hidden;margin:10px 0 6px}
+.offbar>i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s}
+
+/* ---------- ダークモード（端末設定に自動追従） ---------- */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1420; --card:#161f2e; --line:#28344a; --text:#e6ecf5; --sub:#93a1b8;
+    --accent:#5a9dff; --accent-d:#8bbaff; --ok:#4ecb8a; --ok-bg:#12301f;
+    --ng:#ff7b7b; --ng-bg:#331617; --warn:#ffbf5c; --warn-bg:#31240d;
+    --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+  }
+  header{background:var(--card);color:var(--text)}
+  header .badge,.summaryArrow{background:#1d3355;color:#bcd6ff}
+  header button:hover{background:#21334d}
+  .homeHero{background:linear-gradient(125deg,#161f2e 48%,#1b2a43);border-color:#304a72!important}
+  .resumeCard{background:#192741;border-color:#355686!important}
+  .homeHero .quickActions .btn-primary,.btn-primary{background:#2869d7;color:#fff}
+  .choice,select,input[type=number],input[type=password],textarea,.btn-ghost,
+  .figbox,.grid button{background:var(--card);color:var(--text)}
+  .choice:hover:not(.locked),.choice:active:not(.locked){background:#1c2942}
+  .btn-ghost:hover{background:#1c2942;border-color:#3a4a66}
+  .chip{background:var(--card);color:var(--text)}
+  .chip.on{background:#16305c;color:#cfe0ff;border-color:var(--accent)}
+  .choice .no,.tag,table.result th,.progress,.offbar,#boot .bar{background:#212c40;color:var(--sub)}
+  .tag.sub{background:#16305c;color:#bcd6ff}
+  .explain,.hitCard,.score .box,.stats{background:#131c2b}
+  .explain{border-left-color:var(--accent)}
+  .choice.picked{background:#16305c}
+  .choice.picked .no{background:var(--accent);color:#08121f}
+  .choice.correct .no{background:var(--ok);color:#062114}
+  .choice.wrong .no{background:var(--ng);color:#2b0a0a}
+  .grid button.done{background:#16305c;border-color:#2f5ea8;color:#bcd6ff}
+  .grid button.ok{background:var(--ok-bg);border-color:#2c6b48;color:var(--ok)}
+  .grid button.ng{background:var(--ng-bg);border-color:#6e3336;color:var(--ng)}
+  table.result tr.miss td{background:#2a1618}
+  .note{color:#f3d9a8}
+  #toast{background:#26334a}
+  #toast button{background:var(--accent);color:#08121f}
+  .figbox img{background:#fff;border-radius:6px}   /* 図はスキャン画像なので白背景のまま */
+  ::placeholder{color:#6f7d94}
+}
+
+/* ---------- 印刷時は操作系を隠す ---------- */
+@media print{
+  header,.nav,#toast,#boot,.grid,footer{display:none!important}
+  .card{box-shadow:none;border:none;padding:0}
+}
+
+/* 新しい学習ホームの暗色表示 */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101b19;--card:#182723;--line:#30453e;--text:#e8f1ed;--sub:#a3b9b0;
+    --accent:#47bd91;--accent-d:#8adbb6;--shadow:0 2px 14px rgba(0,0,0,.24);
+  }
+  header{background:var(--card)}
+  header .badge,.summaryArrow{background:#244338;color:var(--accent-d)}
+  .homeHero{background:var(--card);border-color:var(--line)!important}
+  .homePath{background:#1b2b26;border-color:var(--line);color:var(--text)}
+  .homePathLearn{background:#204233;border-color:#3c7559}
+  .homePathMark{background:#2a4036;color:var(--accent-d)}
+  .homePathLearn .homePathMark{background:#167b58;color:#fff}
+  .homePath:hover,.bookTile:hover,.bookTile:focus-visible{background:#274337;border-color:var(--accent)}
+  .homeMore,.settingsPanel,.bookTile{background:var(--card);border-color:var(--line);color:var(--text)}
+  .homeMore .summaryArrow,.settingsPanel .summaryArrow{background:#244338;color:var(--accent-d)}
+  .btn-primary,.homeHero .quickActions .btn-primary{background:#168765;color:#fff}
+  .btn-primary:hover{background:#116e54}
+  .chip.on,.choice.picked,.bookFormula,.bookTable thead th{background:#244338;color:var(--text)}
+  .bookEmpty{background:#21332d;color:var(--sub)}
+  /* 教科書の淡色背景を端末の暗色設定に合わせる。図だけは白地を保つ。 */
+  .bookArticle>nav.bookCrumbs,.bookFacts,.bookSteps,.bookFormulaGuide{background:#21332d}
+  .bookArticle>nav.bookCrumbs button:hover{background:#274337}
+  .bookQuestionUnit{background:var(--card)}
+  .bookTable tbody th,.bookTable tbody tr:nth-child(even) td{background:#21332d}
+  .bookFigure figcaption{color:#1a302e}
+  /* 明るい正誤色の上では暗い文字を使い、選択済みの強い指定にも対応する。 */
+  .choice.correct .no,.choice.picked.correct .no{color:#062114}
+  .choice.wrong .no,.choice.picked.wrong .no{color:#2b0a0a}
+}

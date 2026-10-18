@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技術士第一次試験 過去問アプリ</title>
+<meta name="description" content="技術士第一次試験（建設部門）の過去問14年度・1120問をオフラインで学習できるアプリ">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161f2e" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="format-detection" content="telephone=no">
+
+<!-- iOS（iPhone / iPad）でホーム画面に追加したときの挙動 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="技術士過去問">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<!-- use-credentials を付けないと、アクセス制限付きのサイトでは manifest の取得が401になる -->
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+<link rel="stylesheet" href="styles.css?v=3002d2ed92">
+
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>技術士 一次試験<span class="brandSub">学習アプリ</span></h1>
+    <span class="badge" id="hdBadge">令和7年度</span>
+    <span class="spacer"></span>
+    <span class="fsz" title="問題文などの文字サイズ"><button id="btnFsDn" aria-label="文字を小さく">A−</button><span id="fsLabel">100%</span><button id="btnFsUp" aria-label="文字を大きく">A＋</button></span>
+    <button id="btnMemo" class="hide" title="手書きメモ（この問題用）">メモ</button>
+    <button id="btnCalc" class="hide" type="button" aria-controls="calculator" aria-expanded="false" title="四則演算・平方根・百分率・数値メモリ">電卓</button>
+    <button id="btnHome" class="hide">ホームへ</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav id="workspaceNav" class="workspaceNav" aria-label="学習の入口">
+    <button id="btnHomeStudy" class="btn btn-primary" type="button" aria-pressed="true">学習</button>
+    <button id="btnTextbook" class="btn btn-ghost" type="button" aria-pressed="false">教科書<small id="homeTopicCount"></small></button>
+    <button id="btnHomeRecords" class="btn btn-ghost" type="button" aria-pressed="false">記録</button>
+  </nav>
+  <!-- ============ 設定画面 ============ -->
+  <section id="setup">
+    <div id="studyPane">
+    <div class="card resumeCard hide" id="resumeCard">
+      <div class="sectionEyebrow">CONTINUE</div>
+      <h2>前回の続きから</h2>
+      <div class="meta" id="resumeInfo"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" id="btnResume">続きから再開</button>
+        <button class="btn btn-ghost btn-sm" id="btnDiscardSession">途中の出題を破棄</button>
+      </div>
+    </div>
+    <div class="homeScope"><label for="homeSubject">おすすめの科目</label><select id="homeSubject"><option value="all">3科目すべて</option><option value="基礎科目">基礎科目</option><option value="適性科目">適性科目</option><option value="専門科目(建設部門)">建設部門</option></select><p id="homeStats" class="meta"></p></div>
+    <div id="homeRecommendation" class="recommendationCard hide" aria-live="polite"></div>
+    <div id="dueReviewCard" class="recommendationCard hide" aria-live="polite">
+      <h3>今日の復習</h3><p id="dueReviewInfo"></p>
+      <div class="recommendationActions"><button id="btnDueReview" class="btn btn-primary btn-sm" type="button">復習を始める</button><button id="btnDueReviewAll" class="btn btn-ghost btn-sm" type="button">すべて復習する</button></div>
+    </div>
+    <div id="homeTools">
+    <details class="homeMore" id="frequencyCard">
+      <summary><span><strong>頻出テーマから学ぶ</strong><small>公式過去問の出題年度数で並べる</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="homeMoreBody">
+        <div class="meta" id="frequencyIntro"></div>
+        <div class="frequencyControls">
+          <select id="frequencySubject" aria-label="頻出度を調べる科目"></select>
+          <select id="frequencyBand" aria-label="出題頻度で絞る">
+            <option value="all">すべて・頻出順</option>
+            <option value="every">毎年出題</option>
+            <option value="about2">約2年に1回</option>
+          </select>
+        </div>
+        <div class="meta" id="frequencySummary"></div>
+        <div id="frequencyTopics"></div>
+        <button class="btn btn-ghost btn-sm hide" id="frequencyMore">さらに表示</button>
+      </div>
+    </details>
+    <details class="homeMore searchCard" id="searchCard">
+      <summary><span><strong>問題を検索する</strong><small>年度・科目・キーワードから探す</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="homeMoreBody">
+      <div class="searchControls">
+        <input type="search" id="searchText" placeholder="例：液状化、ダルシー、道路橋" aria-label="問題を検索">
+        <select id="searchYear" aria-label="検索する年度"></select>
+        <select id="searchSubject" aria-label="検索する科目"></select>
+      </div>
+      <div class="meta" id="searchCount" style="margin-top:10px"></div>
+      <div class="searchResults" id="searchResults"></div>
+      </div>
+    </details>
+    <section class="card"><h2>予想模試</h2><p class="meta">令和8年度・非公式。3科目55問を最後にまとめて採点します。</p><button class="btn btn-primary btn-sm" id="btnPredExam" type="button">予想模試55問を始める</button></section>
+    <details class="homeMore predictionCard">
+      <summary><span><strong>予想問題を科目別に学ぶ</strong><small>令和8年度・非公式の練習問題80問</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="homeMoreBody">
+        <div class="row">
+          <button class="btn btn-ghost btn-sm" id="btnPredStudy">全80問</button>
+          <button class="btn btn-ghost btn-sm" id="btnPredKiso">基礎30問</button>
+          <button class="btn btn-ghost btn-sm" id="btnPredTekisei">適性15問（選択テーマ）</button>
+          <button class="btn btn-ghost btn-sm" id="btnPredKensetsu">建設35問（選択分野）</button>
+        </div>
+        <p class="meta">予想問題は公式過去問と分けて記録します。</p>
+      </div>
+    </details>
+    </div>
+    <details class="settingsPanel" id="advancedSettings">
+      <summary class="settingsSummary"><span><span class="sectionEyebrow">CUSTOM STUDY</span><strong>出題条件を選んで学ぶ</strong><small>年度・科目・分野、出題順やモードを指定</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="settingsBody">
+
+      <label class="fieldlabel">年度（複数選択可）</label>
+      <div class="chips" id="yearChips"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-ghost btn-sm" id="btnYearAll">全年度を選ぶ</button>
+        <button class="btn btn-ghost btn-sm" id="btnYearLatest">最新年度のみ</button>
+      </div>
+
+      <label class="fieldlabel">科目</label>
+      <div class="chips" id="subjChips"></div>
+
+      <details class="subSettings" id="groupSection"><summary>基礎科目の群 <small>必要なときだけ選択</small></summary>
+        <div class="chips" id="groupChips"></div>
+      </details>
+
+      <details class="subSettings" id="aptitudeSection"><summary>適性科目のテーマ <small>主要テーマとその他</small></summary>
+        <div class="meta">主要テーマ：収録済み全年度で同一テーマが5問以上</div>
+        <div class="chips" id="aptitudeMajorChips" style="margin-top:8px"></div>
+        <div class="meta" style="margin-top:10px">その他：5問未満のテーマをまとめて選択</div>
+        <div class="chips" id="aptitudeOtherChips" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn btn-ghost btn-sm" id="btnAptitudeAll">すべて選ぶ</button>
+          <button class="btn btn-ghost btn-sm" id="btnAptitudeNone">選択を外す</button>
+        </div>
+        <div class="meta" style="margin-top:6px">予想問題の「適性（選択テーマ）」にも反映されます。</div>
+      </details>
+
+      <details class="subSettings" id="fieldSection"><summary>建設部門の11分野 <small>選択年度の問題数を表示</small></summary>
+        <div class="chips" id="fieldChips"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn btn-ghost btn-sm" id="btnFieldsAll">11分野をすべて選ぶ</button>
+          <button class="btn btn-ghost btn-sm" id="btnFieldsNone">選択を外す</button>
+        </div>
+        <div class="meta" style="margin-top:6px">予想問題の「建設（選択分野）」にも反映されます。</div>
+      </details>
+
+      <label class="fieldlabel">出題順・範囲</label>
+      <div class="row">
+        <select id="selOrder">
+          <option value="seq">試験順（本番と同じ並び）</option>
+          <option value="genre">ジャンル内ランダム（ジャンルの順番は本番どおり）</option>
+          <option value="rand" id="optRandOrder">完全ランダム</option>
+        </select>
+        <select id="selFilter">
+          <option value="all">すべての問題</option>
+          <option value="unseen">まだ解いていない問題だけ</option>
+          <option value="wrong">間違えた問題だけ（復習）</option>
+        </select>
+        <select id="selCount">
+          <option value="0">全問</option>
+          <option value="5">5問</option>
+          <option value="10">10問</option>
+          <option value="20">20問</option>
+          <option value="30">30問</option>
+        </select>
+      </div>
+
+      <label class="fieldlabel">選択肢の並び</label>
+      <label class="chip on" id="chipShuffleChoices"><input type="checkbox" id="chkShuffleChoices" checked>間違えたことがある問題の選択肢をシャッフル</label>
+      <div class="meta" style="margin-top:6px">過去に1回でも間違えた問題が対象です。新しい出題から適用し、途中再開では同じ並びを保ちます。</div>
+      <label class="fieldlabel">問題タイプ</label>
+      <div class="chips">
+        <label class="chip on" id="chipTypeAll"><input type="radio" name="qtype" value="all" checked>すべての問題</label>
+        <label class="chip" id="chipTypeCalc"><input type="radio" name="qtype" value="calc">計算問題のみ</label>
+      </div>
+      <div class="meta" style="margin-top:6px"><span id="calcNote"></span></div>
+
+      <label class="fieldlabel">モード</label>
+      <div class="chips">
+        <label class="chip on" id="chipStudy"><input type="radio" name="mode" value="study" checked>1問ずつ採点（学習モード）</label>
+        <label class="chip" id="chipExam"><input type="radio" name="mode" value="exam">最後にまとめて採点（模試モード）</label>
+        <label class="chip" id="chipPractice"><input type="radio" name="mode" value="practice">練習モード（1問ずつ無限に出題）</label>
+      </div>
+      <div class="meta" style="margin-top:6px"><span id="modeNote"></span></div>
+
+      <div class="row startBar">
+        <button class="btn btn-primary" id="btnStart">開始する</button>
+        <span class="meta"><span id="setupCount">—</span></span>
+        <button class="btn btn-ghost btn-sm" id="btnSetupDefault">設定を初期状態に戻す</button>
+      </div>
+      </div>
+    </details>
+
+
+    </div>
+    <div id="recordsPane" class="hide">
+    <details class="homeMore" id="recordCard" open>
+      <summary><span><strong>学習の記録を見る</strong><small>正答率と保存・読み込み</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <div class="homeMoreBody">
+      <div class="stats" id="statsBox"></div>
+      <section class="recordVisuals" aria-label="学習記録のグラフ">
+        <h3>記録をグラフで見る</h3>
+        <div class="learningControls"><select id="chartSubject" aria-label="グラフの科目"><option value="all">全科目</option><option>基礎科目</option><option>適性科目</option><option>専門科目(建設部門)</option></select><select id="chartSource" aria-label="グラフの問題種別"><option value="all">全問題種別</option><option value="official">公式過去問</option><option value="prediction">予想問題</option></select></div>
+        <div id="recordCharts" aria-live="polite"></div>
+      </section>
+      <details class="basicsDetails" id="learningInsights"><summary>得意・苦手と解答履歴</summary>
+        <p class="meta">公式過去問の直近の正誤を問題ごとに集計します。異なる問題を5問以上解いた分野・テーマで、正答率60%以下を苦手、80%以上を得意と表示します。</p>
+        <div class="learningControls"><select id="analysisSubject" aria-label="得意・苦手を確認する科目"><option value="基礎科目">基礎科目</option><option value="適性科目">適性科目</option><option value="専門科目(建設部門)">建設部門</option></select><select id="analysisLevel" aria-label="集計単位"><option value="parent">分野・群</option><option value="topic">テーマ</option></select></div>
+        <div id="learningInsightRows"></div>
+        <h3>間違えた理由の集計</h3><div id="mistakeSummary" class="stats" aria-live="polite"></div><h3>解答履歴</h3><p id="answerLogSummary" class="meta"></p>
+        <div class="learningControls"><select id="answerLogSource" aria-label="解答履歴の問題種別"><option value="official">公式過去問</option><option value="prediction">予想問題</option><option value="all">すべて</option></select></div>
+        <div id="answerLogRows"></div><button id="btnMoreAnswerLog" class="btn btn-ghost btn-sm hide" type="button">さらに50件表示</button>
+      </details>
+      <details class="subSettings compactDetails"><summary>記録の保存・読み込み</summary>
+        <div class="row" style="margin-top:14px">
+          <button class="btn btn-ghost btn-sm" id="btnExport">記録を保存</button>
+          <button class="btn btn-ghost btn-sm" id="btnImport">保存した記録を読み込む</button>
+          <label class="chip"><input type="checkbox" id="chkMemo">手書きメモも含める</label>
+          <input type="file" id="fileImport" accept="application/json,.json" class="hide">
+          <button class="btn btn-ghost btn-sm" id="btnReset">記録をすべて消す</button>
+        </div>
+        <div class="meta" style="margin-top:8px">解答記録はこの端末に自動保存されます。別の端末に移すときはJSONで保存してください。</div>
+      </details>
+      </div>
+    </details>
+
+    <div id="appTools"></div>
+    </div>
+  </section>
+
+  <!-- ============ 教科書 ============ -->
+  <section id="textbook" class="hide" aria-label="教科書">
+    <div id="bookStudyReturn" class="bookBack hide"><button class="btn btn-ghost btn-sm" id="btnReturnToQuiz" type="button">← 解答中の問題へ戻る</button></div>
+    <nav class="bookCrumbs" id="bookCrumbs" aria-label="現在位置"></nav>
+    <div id="bookSelection" class="card">
+      <div id="bookLearningChart"></div>
+      <div id="bookContent"></div>
+    </div>
+    <details class="homeMore" id="comparisonSection">
+      <summary><span><strong>似た用語・公式の比較カード</strong><small>意味・使う条件・間違えやすい点</small></span></summary>
+      <div class="homeMoreBody" id="comparisonLibrary"></div>
+    </details>
+  </section>
+
+  <!-- ============ 出題画面 ============ -->
+  <section id="quiz" class="hide">
+    <div id="bookQuizReturn" class="bookBack hide"><button class="btn btn-ghost btn-sm" id="btnBookFromQuiz">← 元の教科書テーマに戻る</button></div>
+    <div class="card">
+      <div class="meta">
+        <span><b id="qPos">1</b> / <span id="qTotal">30</span> 問</span>
+        <span>正解 <b id="qOk">0</b>／解答 <b id="qAns">0</b></span>
+        <span id="qRate"></span>
+        <span>経過 <b id="qElapsed">0:00</b></span>
+      </div>
+      <div class="progress"><div id="qBar" style="width:0%"></div></div>
+
+      <div style="margin-top:14px">
+        <span class="tag" id="qYear"></span><span class="tag sub" id="qSubj"></span><span class="tag hide" id="qGroup"></span>
+      </div>
+      <div class="qnum" id="qNumber"></div>
+      <div class="qtext" id="qText"></div>
+      <figure id="qFig" class="figbox hide">
+        <img id="qFigImg" alt="">
+        <figcaption id="qFigCap">図表（日本技術士会 公開の試験問題PDFより）　クリックで拡大</figcaption>
+      </figure>
+      <p id="qChoiceNotice" class="choiceShuffleNotice hide" role="status"></p>
+      <div class="choices" id="qChoices" role="radiogroup" aria-label="選択肢"></div>
+
+      <div class="row quizUtility"><button class="btn btn-ghost btn-sm" id="btnUnsure" aria-pressed="false">☆ 自信なしにする</button></div>
+
+      <div class="row hide" id="qGiveUpRow" style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" id="btnGiveUp">わからない（解説を見る）</button>
+        <span class="meta">不正解として記録し、正答と解説を表示します</span>
+      </div>
+
+      <div id="qVerdict" class="hide" aria-live="polite"></div>
+      <div id="qExplain" class="hide"></div>
+      <div id="qNote" class="hide"></div>
+      <div id="qTextbookAction" class="questionTextbookAction hide">
+        <button class="btn btn-primary btn-sm" id="btnQuestionTextbook" type="button">関連する教科書を開く</button>
+        <span class="meta" id="qTextbookHint"></span>
+      </div>
+
+      <div id="qMistakeReason" class="hide"></div>
+      <details id="qComparison" class="basicsDetails hide"><summary>似た用語・公式を比較する</summary><div id="qComparisonCards"></div></details>
+      <details id="qBasicsBox" class="basicsDetails hide">
+        <summary>この問題に必要な基礎知識</summary>
+        <ul id="qBasicsList"></ul>
+      </details>
+
+      <div id="praSimBox" class="hide" style="margin-top:14px">
+        <h3>類似の過去問（復習用）</h3>
+        <div id="praSimHits"></div>
+      </div>
+      <div id="praRefBox" class="hide" style="margin-top:14px">
+        <h3>解説書の該当ページ</h3>
+        <div id="praRefContent"></div>
+      </div>
+
+
+      <div class="nav">
+        <button class="btn btn-ghost" id="btnPrev">前の問題</button>
+        <button class="btn btn-primary" id="btnNext">次の問題</button>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost btn-sm" id="btnFinish">ここまでで採点する</button>
+      </div>
+      <div class="meta" id="praHint" style="margin-top:8px"></div>
+
+      <details class="quizMore"><summary>問題一覧から移動する</summary><div class="grid" id="qGrid"></div></details>
+    </div>
+  </section>
+
+  <!-- ============ 結果画面 ============ -->
+  <section id="result" class="hide">
+    <div id="bookResultReturn" class="bookBack hide"><button class="btn btn-ghost btn-sm" id="btnBookFromResult">← 元の教科書テーマに戻る</button></div>
+    <div class="card">
+      <h2>採点結果</h2>
+      <div class="score" id="rScore"></div>
+      <div id="resultRecommendation" class="recommendationCard hide" aria-live="polite"></div>
+      <div id="rPass"></div>
+      <h3>問題別の結果</h3>
+      <div style="overflow-x:auto"><table class="result" id="rTable"></table></div>
+      <details id="rMistakeSection" class="basicsDetails hide"><summary>今回の誤答理由を記録する（任意）</summary><div id="rMistakeReasons"></div></details>
+      <div class="nav" style="margin-top:20px">
+        <button class="btn btn-primary" id="btnReview">間違えた問題を復習する</button>
+        <button class="btn btn-ghost" id="btnAgain">設定に戻る</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    出典：公益社団法人 日本技術士会「過去問題（第一次試験）」「択一式問題の正答」<br>
+    <a href="https://www.engineer.or.jp/c_categories/index02021.html" target="_blank" rel="noopener">過去問題（第一次試験）</a> ／
+    <a href="https://www.engineer.or.jp/c_topics/004/004106.html" target="_blank" rel="noopener">択一式問題の正答</a><br>
+    問題文はPDFから書き起こしたもので、図表を伴う問題は文章で補足しています。解説は学習用の参考であり公式のものではありません。<br>
+    正確な原文・図表は必ず日本技術士会公開のPDFで確認してください。
+  </footer>
+</div>
+
+<!-- ============ 手書きメモ（フリーボード） ============ -->
+<div id="memo" class="hide" data-mode="float" aria-label="手書きメモ">
+  <div id="memoBar">
+    <span class="ttl" id="memoTtl">メモ</span>
+    <span class="grp" id="memoPens"></span>
+    <button id="memoErase" title="消しゴム（なぞった線を消す）">消しゴム</button>
+    <span class="grp" id="memoWidths"></span>
+    <span class="sep"></span>
+    <button id="memoUndo" title="直前の線を消す">戻す</button>
+    <span class="sp"></span>
+    <button id="memoDock" title="独立ウィンドウ／画面分割を切り替え">分割</button>
+    <button id="memoClose" title="閉じる">✕</button>
+  </div>
+  <div id="memoScroll"><canvas id="memoCanvas"></canvas></div>
+  <div id="memoFoot">
+    <button id="memoZoomOut" title="縮小">−</button>
+    <button id="memoZoomIn" title="拡大">＋</button>
+    <button id="memoFit" title="盤面全体を表示">全体表示</button>
+    <button id="memoFinger" title="指1本で描くかどうかを切り替え">指で描く: ON</button>
+    <button id="memoClear">全消去</button>
+    <span id="memoInfo"></span>
+    <span class="hint">固定サイズの盤面。指1本・ペン・マウスで書く。二本指で移動・拡大縮小、マウスは右ドラッグで移動。</span>
+  </div>
+  <div id="memoGrip"></div>
+</div>
+
+<section id="calculator" class="hide" role="dialog" aria-modal="false" aria-labelledby="calcTitle" tabindex="-1">
+  <div id="calcBar">
+    <h2 id="calcTitle">電卓</h2>
+    <button id="calcClose" type="button" aria-label="電卓を閉じる">✕</button>
+  </div>
+  <div id="calcBody">
+    <div class="calcScreen">
+      <div id="calcStatus" aria-live="polite"></div>
+      <output id="calcDisplay" aria-label="電卓の表示値" aria-live="polite" aria-atomic="true">0</output>
+    </div>
+    <div class="calcKeys" aria-label="電卓のキー">
+      <button type="button" class="calcFunction" data-calc-key="mc" title="数値メモリを消去">MC</button>
+      <button type="button" class="calcFunction" data-calc-key="mr" title="数値メモリを呼び出す">MR</button>
+      <button type="button" class="calcFunction" data-calc-key="mplus" title="表示値を数値メモリに加算">M＋</button>
+      <button type="button" class="calcFunction" data-calc-key="mminus" title="表示値を数値メモリから減算">M−</button>
+      <button type="button" class="calcFunction" data-calc-key="ac" title="計算をリセット（数値メモリは保持）">AC</button>
+      <button type="button" class="calcFunction" data-calc-key="ce" title="入力中の数だけ消去">CE</button>
+      <button type="button" class="calcFunction" data-calc-key="back" aria-label="入力中の最後の桁を消す">⌫</button>
+      <button type="button" class="calcFunction" data-calc-key="sqrt" aria-label="平方根">√</button>
+      <button type="button" data-calc-key="7">7</button><button type="button" data-calc-key="8">8</button><button type="button" data-calc-key="9">9</button><button type="button" class="calcFunction" data-calc-key="/" aria-label="割る">÷</button>
+      <button type="button" data-calc-key="4">4</button><button type="button" data-calc-key="5">5</button><button type="button" data-calc-key="6">6</button><button type="button" class="calcFunction" data-calc-key="*" aria-label="掛ける">×</button>
+      <button type="button" data-calc-key="1">1</button><button type="button" data-calc-key="2">2</button><button type="button" data-calc-key="3">3</button><button type="button" class="calcFunction" data-calc-key="-" aria-label="引く">−</button>
+      <button type="button" data-calc-key="0">0</button><button type="button" data-calc-key=".">.</button><button type="button" class="calcFunction" data-calc-key="sign" aria-label="符号を反転">＋/−</button><button type="button" class="calcFunction" data-calc-key="+" aria-label="足す">＋</button>
+      <button type="button" class="calcFunction" data-calc-key="%" aria-label="百分率">%</button><button type="button" class="calcEquals" data-calc-key="=" style="grid-column:span 3" aria-label="計算結果">＝</button>
+    </div>
+    <details class="calcHelp">
+      <summary>使い方・試験で使える機能</summary>
+      <p>一般電卓の方式で、入力した順に計算します。2 ＋ 3 × 4 ＝ は20です。表示は最大12桁の有効数字です。</p>
+      <p>200 ＋ 10 % ＝ は220、200 × 10 % ＝ は20。M＋・M−は表示値をメモリへ加減算し、MRで呼び出し、MCで消去します。</p>
+      <p>タイトル部分をドラッグして移動できます。電卓にフォーカスがあるときは数字・四則キー・Enter（＝）・Backspace（1桁消去）・Delete（CE）が使えます。Escで閉じます。</p>
+      <p>令和8年度の公式案内は四則演算・平方根・百分率・数値メモリを認めています。これはその機能範囲で練習する簡易電卓です。実機の操作は機種によって異なります。試験室ではスマホやこのアプリは使用できません。</p>
+      <a href="https://www.engineer.or.jp/c_topics/011/attached/attach_11780_2.pdf#page=16" target="_blank" rel="noopener noreferrer">令和8年度 受験申込み案内・14頁（確認：2026-10-12）</a>
+    </details>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:12px;font-size:14px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap"><a href="./terms.html" target="_blank" rel="noopener">利用案内</a><a href="./privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a><a href="./contact.html" target="_blank" rel="noopener">お問い合わせ</a></footer>
+<!-- 起動中の表示（データ読み込みが終わったら消える） -->
+<div id="boot">
+  <div class="ttl">技術士第一次試験 過去問アプリ</div>
+  <div>問題データを読み込んでいます…</div>
+  <div class="bar"><i></i></div>
+  <div id="bootMsg"></div>
+</div>
+
+<!-- 通知バー（オフライン／更新のお知らせ） -->
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* データを読み込んでからアプリ本体(app.js)を起動する */
+(function () {
+  var V = '3002d2ed92';
+  var startupError = false;
+  // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
+  window.addEventListener('error', function (event) {
+    if (event.filename && event.filename.indexOf('app.js') !== -1) startupError = true;
+  });
+  if ('serviceWorker' in navigator) {
+    var hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (hadController || startupError) location.reload();
+    });
+    navigator.serviceWorker.register('sw.js', {scope:'./', updateViaCache:'none'})
+      .then(function () { return navigator.serviceWorker.ready; })
+      .then(function (reg) { if (reg.active) reg.active.postMessage({type:'CACHE_TEXTBOOK_IMAGES'}); })
+      .catch(function (error) { console.warn('[pwa] update:', error); });
+  }
+  function fail(msg) {
+    var b = document.getElementById('boot');
+    if (!b) return;
+    b.classList.add('err');
+    b.innerHTML = '<div class="ttl">読み込みに失敗しました</div><div>' + msg + '</div>' +
+      '<button class="btn btn-primary btn-sm retry" onclick="location.reload()">再読み込み</button>';
+  }
+  function get(u) {
+    return fetch(u + '?v=' + V, { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(u + ' : HTTP ' + r.status); return r.json(); });
+  }
+  Promise.all([get('data/questions.json'), get('data/predictions.json'), get('data/meta.json')]).then(function (a) {
+    window.APPDATA = {
+      questions:  a[0],
+      predictions: a[1],
+      figures:    a[2].figures    || {},
+      kaisetsu:   a[2].kaisetsu   || {},
+      genreOrder: a[2].genreOrder || {},
+      examComp:   a[2].examComp   || {},
+      textbook:   a[2].textbook   || {},
+      explainFigures: a[2].explainFigures || {}
+    };
+    var s = document.createElement('script');
+    s.src = 'app.js?v=' + V;
+    s.onload = function () { if (startupError) { fail('アプリを更新しています。通信できる状態で再読み込みしてください。'); return; } var b = document.getElementById('boot'); if (b) b.remove(); };
+    s.onerror = function () { fail('アプリ本体を読み込めませんでした'); };
+    document.body.appendChild(s);
+  }).catch(function (e) {
+    fail((navigator.onLine ? '' : 'オフラインで、まだデータが保存されていません。<br>一度オンラインで開いてください。<br><br>')
+         + String(e.message || e));
+  });
+})();
+</script>
+
+
+</body>
+</html>
