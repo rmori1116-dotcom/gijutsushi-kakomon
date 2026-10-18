@@ -3213,6 +3213,24 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hideToast(); });
 })();
 
+/* Schedule hands off to the canonical quiz/recording flow. It never writes history. */
+(function scheduleIntegration(){
+  const refresh=()=>{loadHistory();if(!$('setup').classList.contains('hide'))refreshSetup();};
+  window.addEventListener('storage',e=>{if(e.key===localStorage.key(STORE_KEY)||e.key===null)refresh();});
+  window.addEventListener('focus',refresh);
+  const token=new URLSearchParams(location.search).get('scheduleTask');
+  if(!token||! /^[a-f0-9-]{36}$/.test(token))return;
+  let launch;
+  try{launch=JSON.parse(sessionStorage.getItem('gijutsushi_schedule_launch:'+token)||'null');}catch(e){return;}
+  if(!launch||launch.owner!==localStorage.owner||!Number.isFinite(launch.at)||Date.now()-launch.at>3600000||launch.at>Date.now()+1000)return;
+  if(!Array.isArray(launch.ids)||launch.ids.length>1200||!launch.ids.every(id=>typeof id==='string'&&QUESTION_BY_ID.has(id)))return;
+  const back=document.createElement('a');back.href='schedule/';back.className='btn btn-ghost btn-sm';back.textContent='← スケジュールへ戻る';
+  $('quiz').prepend(back);const resultBack=back.cloneNode(true);$('result').prepend(resultBack);
+  const url=new URL(location.href);url.searchParams.delete('scheduleTask');window.history.replaceState(null,'',url);
+  if(launch.topicId){const t=BOOK_TOPIC_BY_ID.get(launch.topicId);if(t)bookShow(t.subject,t.parentId,t.id);}
+  else if(launch.ids.length)startQuiz([...new Set(launch.ids)].map(id=>QUESTION_BY_ID.get(id)),'study');
+})();
+
 /* Appended within the application scope. Drive authorization is user initiated. */
 (function(){
   'use strict';

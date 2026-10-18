@@ -1,5 +1,6 @@
 'use strict';
-const P=Planner,$=id=>document.getElementById(id),KEY='gijutsushi_schedule_prototype_v1';
+const P=Planner,$=id=>document.getElementById(id),LEGACY_KEY='gijutsushi_schedule_prototype_v1';
+const appStorage=DriveStudyCore.storage(window.localStorage),APP_HISTORY='gijutsushi_r7_history_v1',KEY=appStorage.owner?'gijutsushi_schedule_v2:'+appStorage.owner:'gijutsushi_schedule_v2:local';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const short=s=>s==='専門科目(建設部門)'?'建設部門':s;
 const fmt=d=>`${+d.slice(5,7)}/${+d.slice(8)}（${'日月火水木金土'[P.date(d).getDay()]}）`;
@@ -8,15 +9,26 @@ const today=P.day(new Date());
 let qs=[],predictions=[],book={},tab='today',selected=today<P.defaults.start?P.defaults.start:today,weekStart=selected,state={config:structuredClone(P.defaults),source:'sample',history:{},checks:{},notes:{},sessionLog:[]},model;
 function tell(message){$('notice').textContent=message;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){tell('端末への保存ができません。計画を書き出して保存してください。');}}
+function readAppHistory(){
+ if((window.localStorage.getItem(DriveStudyCore.ACTIVE)||'')!==appStorage.owner){location.reload();return;}
+ try{state.history=P.normalize(JSON.parse(appStorage.getItem(APP_HISTORY)||'{}'),qs);}catch(e){throw Error('アプリの学習記録を読み込めません。アプリの記録画面で確認してください。');}
+}
+function launchApp(task){
+ const token=crypto.randomUUID();
+ try{sessionStorage.setItem('gijutsushi_schedule_launch:'+token,JSON.stringify({owner:appStorage.owner,at:Date.now(),ids:task.ids.map(q=>q.id),topicId:task.topicId||null}));location.href='../index.html?scheduleTask='+encodeURIComponent(token);}
+ catch(e){tell('演習を開けませんでした。ブラウザーの保存設定を確認してください。');}
+}
+function resumeSync(){if(!qs.length||state.source!=='app')return;if($('detail').open)return;try{render();}catch(e){tell(e.message);}}
 function sample(){
  const out={},counts=[65,82,168],correct=[17,47,82];
  P.subjects.forEach((s,i)=>qs.filter(q=>q.subject===s).slice(0,counts[i]).forEach((q,j)=>{out[q.id]={n:1,ok:j<correct[i]?1:0,lastOk:j<correct[i],attempts:[]};}));return out;
 }
 const fields=[['start','学習開始日','date'],['finish','過去問の完了目標','date'],['prediction','予想問題の日','date'],['final','最終確認の日','date'],['exam','試験日（自分で確認）','date'],['target','各科目の目標正答率（%）','number',1,100,1],['weekdayNew','平日の新規問題・上限（問）','number',1,100,1],['holidayNew','休日の新規問題・上限（問）','number',1,150,1],['weekdayReview','平日の復習・上限（問）','number',0,50,1],['holidayReview','休日の復習・上限（問）','number',0,70,1],['holidaySets','休日の基本セット数（30分×）','number',1,8,1],['newMinutes','新規1問の所要時間（分）','number',1,15,.1],['reviewMinutes','復習1問の所要時間（分）','number',1,15,.1]];
 function render(){
+ if(state.source==='app')readAppHistory();
  model=P.plan(qs,state.history,state.config,today);
  if(!state.goal){state.goal=P.createGoal(qs,state.history,state.config,today);save();}
- $('sourceLabel').textContent=state.source==='sample'?'サンプル記録 · 架空の履歴で操作を試せます':state.source==='empty'?'記録なし · この試作品の演習から開始':state.source==='app'?'このブラウザーのアプリ記録を参照（試作品内にコピー）':'取り込んだ学習記録を使用';
+ $('sourceLabel').textContent=state.source==='sample'?'サンプル記録 · 架空の履歴で操作を試せます':state.source==='empty'?'記録なし · この試作品の演習から開始':state.source==='app'?'アプリと自動連動中 · 同じブラウザー・アカウントの記録':'取り込んだ学習記録を使用';
  document.querySelectorAll('.view').forEach(e=>e.hidden=e.id!==tab);
  document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',e.dataset.tab===tab);if(e.dataset.tab===tab)e.setAttribute('aria-current','page');else e.removeAttribute('aria-current');});
  if(tab==='today')renderToday();if(tab==='calendar')renderCalendar();if(tab==='progress')renderProgress();if(tab==='settings')renderSettings();
@@ -57,7 +69,7 @@ function renderToday(){
  <div class="kpis"><div class="kpi"><small>過去問の進捗</small><strong>${done}</strong><span> / ${total}問</span><div class="meter"><i style="width:${done/total*100}%"></i></div></div><div class="kpi"><small>残りの過去問</small><strong>${model.remaining}</strong><span> 問</span><small>予想問題${predictions.length}問は別枠</small></div><div class="kpi"><small>これからの基本枠</small><strong>${model.rows.filter(r=>r.newCount>0).length}</strong><span> 日</span><small>休みの日は再配分</small></div></div>
  <div class="note ${model.shortfall?'warning':''}">${warning}<br><span class="hint">公式過去問1,120問のうち、採点対象外の3問を除く1,117問を進捗・計画の対象にしています。</span></div>
  ${renderGoalProgress()}
- <div class="columns"><div><div class="panel"><div class="sectionhead"><h2>${selected===today?'今日':fmt(selected)}の予定 <span class="badge">${completed}/${entries.length}チェック</span></h2><input aria-label="表示する日" id="selectedDate" type="date" value="${selected}"></div><div id="taskList">${entries.map(t=>`<article class="task ${state.checks[selected+':'+t.id]?'checked':''}"><input type="checkbox" data-check="${t.id}" aria-label="${esc(t.title)}を完了" ${state.checks[selected+':'+t.id]?'checked':''}><div><div class="tasktime">${t.time}</div><h3>${esc(t.title)}</h3><p class="hint">${esc(t.text)}</p>${t.mode?`<div class="actions"><button class="primary" data-task="${t.id}" ${t.ids.length?'':'disabled'}>演習を試す →</button></div>`:''}</div></article>`).join('')||`<p class="resttitle">${row.type==='rest'?'お休みの日。予定は、ほかの日へ。':selected<c.start?'学習開始前の準備期間です。':'通常の過去問計画はありません。'}</p><p class="muted">カレンダーで学習する日を選べます。</p>`}</div><div class="dayedit"><label for="dayType">この日の扱い</label><select id="dayType"><option value="auto">自動（土日は休日）</option><option value="weekday">平日ペース</option><option value="holiday">休日ペース</option><option value="rest">お休み</option></select></div></div>
+ <div class="columns"><div><div class="panel"><div class="sectionhead"><h2>${selected===today?'今日':fmt(selected)}の予定 <span class="badge">${completed}/${entries.length}チェック</span></h2><input aria-label="表示する日" id="selectedDate" type="date" value="${selected}"></div><div id="taskList">${entries.map(t=>`<article class="task ${state.checks[selected+':'+t.id]?'checked':''}"><input type="checkbox" data-check="${t.id}" aria-label="${esc(t.title)}を完了" ${state.checks[selected+':'+t.id]?'checked':''}><div><div class="tasktime">${t.time}</div><h3>${esc(t.title)}</h3><p class="hint">${esc(t.text)}</p>${t.mode?`<div class="actions"><button class="primary" data-task="${t.id}" ${t.ids.length?'':'disabled'}>${state.source==='app'?'アプリで演習 →':'演習を試す →'}</button></div>`:''}</div></article>`).join('')||`<p class="resttitle">${row.type==='rest'?'お休みの日。予定は、ほかの日へ。':selected<c.start?'学習開始前の準備期間です。':'通常の過去問計画はありません。'}</p><p class="muted">カレンダーで学習する日を選べます。</p>`}</div><div class="dayedit"><label for="dayType">この日の扱い</label><select id="dayType"><option value="auto">自動（土日は休日）</option><option value="weekday">平日ペース</option><option value="holiday">休日ペース</option><option value="rest">お休み</option></select></div></div>
  <div class="note"><strong>余裕があれば · 任意</strong><br>平日22時以降の追加演習や、休日の追加30分セットは自由です。基本計画の完了条件には含めません。</div><div class="panel"><h3>今日のひとこと</h3><label class="hint" for="dailyNote">つまずいたこと・次に確認したいこと</label><textarea id="dailyNote" rows="3" style="width:100%;margin-top:8px;padding:10px;border:1px solid #ccd7ce;border-radius:8px;font:inherit">${esc(state.notes[selected]||'')}</textarea><button id="saveNote" class="quiet">メモを保存</button></div></div>
  <aside><div class="panel"><p class="eyebrow">SUBJECT BALANCE</p><h2>一周と、理解度。</h2><p class="hint">正答率は問題ごとの最後の解答で計算。両方の目標を分けて確認します。</p>${st.map(s=>`<div class="subject"><div class="subjectline"><strong>${short(s.subject)}</strong><b>${pct(s.rate)}</b></div><div class="meter"><i style="width:${(s.rate||0)*100}%"></i></div><div class="hint">${s.correct}/${s.scored}問が直近正解 · 目標${c.target}%<br>未演習 ${s.left}問 / 全${s.total}問</div></div>`).join('')}</div><div class="panel"><p class="eyebrow">REVISIT</p><h2>先に確認したいテーマ</h2>${topicRows().slice(0,3).map(t=>`<div class="topic"><h3>${esc(t.title)}</h3><div class="hint">直近正答率 ${pct(t.rate)} · 演習済み${t.done}問</div><button data-book="${esc(t.id)}">教科書を読む →</button></div>`).join('')||'<p class="hint">誤答したテーマがここに表示されます。</p>'}</div></aside></div>`;
  $('selectedDate').onchange=e=>{if(P.validDay(e.target.value)){selected=e.target.value;render();}};
@@ -95,11 +107,11 @@ function renderProgress(){
 }
 function renderSettings(){$('configFields').innerHTML=fields.map(([k,label,type,min,max,step])=>`<label class="field"><span>${label}</span><input name="${k}" type="${type}" value="${state.config[k]}" required ${type==='number'?`min="${min}" max="${max}" step="${step}"`:''}></label>`).join('');}
 function dialog(label,html){$('detailLabel').textContent=label;$('detailBody').innerHTML=html;if(!$('detail').open)$('detail').showModal();}
-function readBook(id){const t=book.topics.find(t=>t.id===id),c=book.content[id];if(!t)return;
+function readBook(id){if(state.source==='app'){launchApp({topicId:id,ids:[]});return;}const t=book.topics.find(t=>t.id===id),c=book.content[id];if(!t)return;
  dialog('教科書 · 文章と表のプレビュー',`<div class="reading"><h2>${esc(t.title)}</h2><p>${esc(c?.intro||'本文がありません。')}</p>${(c?.sections||[]).map(s=>`<h3>${esc(s.title)}</h3>${(s.paragraphs||[]).map(p=>`<p>${esc(p)}</p>`).join('')}${s.formula?`<div class="note">${esc(s.formula)}</div>`:''}${s.table?`<div class="tablewrap"><table><thead><tr>${(s.table.headers||[]).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${(s.table.rows||[]).map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:''}`).join('')}<p class="hint">図・計算ガイドは本番アプリの教科書で確認できます。</p><a target="_blank" rel="noopener" href="../index.html">学習アプリを開く ↗</a></div>`);
 }
 let session=null;
-function startPractice(task){session={task,list:task.ids.slice(),index:0,correct:0,attempted:0,answered:false};showQuestion();}
+function startPractice(task){if(state.source==='app'){launchApp(task);return;}session={task,list:task.ids.slice(),index:0,correct:0,attempted:0,answered:false};showQuestion();}
 function showQuestion(){
  if(session.index>=session.list.length){dialog('演習完了',`<h2>おつかれさまでした。</h2><p>解答 ${session.attempted}問中 ${session.correct}問正解。スキップ ${session.list.length-session.attempted}問。</p><p class="hint">${session.task.mode==='prediction'?'予想問題は過去問の履歴に加算していません。':'解答は試作品内に保存しました。'}予定のチェックは自分で付けてください。本番アプリの学習履歴には反映しません。</p><button id="finishPractice" class="primary">予定に戻る</button>`);$('finishPractice').onclick=()=>{$('detail').close();render();};return;}
  const q=session.list[session.index];session.answered=false;
@@ -125,14 +137,16 @@ $('emptyButton').onclick=()=>{if(!confirm('試作品内の記録とチェック�
 $('historyImport').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw Error('20MB以下のJSONを選んでください。');const data=JSON.parse(await file.text()),h=P.normalize(data,qs);if(!Object.keys(h).length)throw Error('対応する公式過去問の解答記録が見つかりません。');if(!confirm(`${Object.keys(h).length}問の記録で試作品内の履歴を置き換えますか？`))return;state.goal=null;state.history=h;state.source='import';state.checks={};save();render();tell(`${Object.keys(h).length}問の記録を取り込みました。元の学習記録は変更していません。`);}catch(err){tell('取込できませんでした：'+err.message);}finally{e.target.value='';}};
 $('exportPlan').onclick=()=>{const blob=new Blob([JSON.stringify({kind:'study-schedule-prototype',version:1,state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`学習計画_${today}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);tell('計画を書き出しました。');};
 $('planImport').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw Error('20MB以下のJSONを選んでください。');const data=JSON.parse(await file.text());if(data.kind!=='study-schedule-prototype'||!data.state)throw Error('この試作品で書き出した計画を選んでください。');const c={...structuredClone(P.defaults),...data.state.config};const error=P.validate(c);if(error)throw Error(error);if(!confirm('現在の計画と試作品内の記録を、ファイルの内容で置き換えますか？'))return;state={config:c,source:['sample','empty','app','import'].includes(data.state.source)?data.state.source:'import',history:P.normalize(data.state.history,qs),checks:data.state.checks||{},notes:data.state.notes||{},goal:validGoal(data.state.goal)?data.state.goal:null};save();render();tell('計画を読み込みました。');}catch(err){tell('読込できませんでした：'+err.message);}finally{e.target.value='';}};
-window.addEventListener('storage',e=>{if(e.key===KEY)tell('別のタブで試作品の記録が変わりました。再読み込みしてから操作してください。');});
+window.addEventListener('storage',e=>{if(e.key===DriveStudyCore.ACTIVE){location.reload();return;}if(e.key===appStorage.key(APP_HISTORY)||e.key===null)resumeSync();if(e.key===KEY)tell('別のタブで計画が変わりました。再読み込みしてください。');});
+window.addEventListener('focus',resumeSync);window.addEventListener('pageshow',resumeSync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeSync();});
+$('autoSyncButton').onclick=()=>{if(state.source!=='app')state.goal=null;state.source='app';readAppHistory();save();render();tell('アプリとの自動連動を有効にしました。サンプルや取り込んだ記録は本番アプリへ書き込みません。');};
 async function init(){try{
  [qs,predictions,book]=await Promise.all(['questions','predictions','meta'].map(async n=>{const r=await fetch(`../data/${n}.json`);if(!r.ok)throw Error('データの読込に失敗しました');return r.json();}));
  book={...book.textbook,figures:book.figures};
  qs=qs.filter(q=>q.kind!=='prediction'&&q.answer!=null);
  let raw;try{raw=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
  if(raw?.config&&!P.validate({...structuredClone(P.defaults),...raw.config})){state={...state,...raw,config:{...structuredClone(P.defaults),...raw.config},history:P.normalize(raw.history,qs),goal:validGoal(raw.goal)?raw.goal:null};}
- else{let app;try{app=JSON.parse(localStorage.getItem('gijutsushi_r7_history_v1')||'null');}catch(e){}if(app&&Object.keys(app).length){state.history=P.normalize(app,qs);state.source='app';}else state.history=sample();save();}
+ else{let legacy;try{legacy=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');}catch(e){}if(!appStorage.owner&&legacy?.config&&!P.validate({...structuredClone(P.defaults),...legacy.config})){state.config={...structuredClone(P.defaults),...legacy.config};state.checks=legacy.checks||{};state.notes=legacy.notes||{};}state.source='app';state.goal=null;readAppHistory();save();}
  $('loading').hidden=true;render();
  }catch(e){$('loading').innerHTML=`<h2>読み込めませんでした</h2><p>ローカルサーバーからこのページを開いてください。</p><p>${esc(e.message)}</p><button onclick="location.reload()">再読み込み</button>`;}}
 init();
