@@ -1,0 +1,1 @@
+window.SCHEDULE_DRIVE_CLIENT_ID = "966705122251-pjqqao4get3tfhubhu4vlums07fijah7.apps.googleusercontent.com";

@@ -9,16 +9,17 @@
   const safeKeys=x=>Object.keys(dict(x)).filter(k=>!['__proto__','constructor','prototype'].includes(k));
   const json=x=>JSON.stringify(x);
   function compare(a,b){return (a?.at||0)-(b?.at||0)||String(a?.actor||'').localeCompare(String(b?.actor||''));}
-  function empty(owner){return {app:'gijutsushi-drive',schema:1,owner,fields:{history:{},unsure:{},learned:{},memos:{}}};}
+  function empty(owner){return {app:'gijutsushi-drive',schema:1,owner,fields:{history:{},unsure:{},learned:{},memos:{},schedule:{}}};}
   function validate(doc,owner){
     if(doc?.app!=='gijutsushi-drive'||doc.schema!==1||doc.owner!==owner||!cleanId(owner))throw Error('アカウントまたは保存形式が一致しません。');
     for(const group of Object.keys(empty(owner).fields)){
+      if(group==='schedule'&&!doc.fields?.schedule)continue;
       if(!doc.fields||!doc.fields[group]||Array.isArray(doc.fields[group])||typeof doc.fields[group]!=='object')throw Error('保存データの形式が不正です。');
       for(const key of safeKeys(doc.fields[group])){
         const r=doc.fields[group][key];
         if(!r||!Number.isSafeInteger(r.at)||r.at<0||!cleanId(r.actor)||!Object.hasOwn(r,'value'))throw Error('保存データの更新情報が不正です。');
         if(['unsure','learned'].includes(group)&&typeof r.value!=='boolean')throw Error('チェックの形式が不正です。');
-        if(['history','memos'].includes(group)&&r.value!==null&&(typeof r.value!=='object'||Array.isArray(r.value)))throw Error('学習記録の形式が不正です。');
+        if(['history','memos','schedule'].includes(group)&&r.value!==null&&(typeof r.value!=='object'||Array.isArray(r.value)))throw Error('学習記録の形式が不正です。');
       }
     }
     return doc;
@@ -33,9 +34,10 @@
     return out;
   }
   function capture(previous,current,actor,now=Date.now()){
-    const doc=JSON.parse(json(previous));let clock=now;
-    for(const group of Object.keys(doc.fields))for(const r of Object.values(doc.fields[group]))clock=Math.max(clock,r.at+1);
+    const doc=JSON.parse(json(previous));doc.fields.schedule=doc.fields.schedule||{};let clock=now;
+    for(const group of Object.keys(doc.fields))for(const r of Object.values(doc.fields[group]||{}))clock=Math.max(clock,r.at+1);
     for(const group of Object.keys(doc.fields)){
+      if(group==='schedule'){if(current.schedule?.plan&&(!doc.fields.schedule.plan||compare(current.schedule.plan,doc.fields.schedule.plan)>0))doc.fields.schedule.plan=current.schedule.plan;continue;}
       const values=['unsure','learned'].includes(group)?Object.fromEntries((current[group]||[]).map(k=>[k,true])):dict(current[group]);
       for(const key of new Set([...safeKeys(values),...safeKeys(doc.fields[group])])){
         const value=Object.hasOwn(values,key)?values[key]:['unsure','learned'].includes(group)?false:null;
@@ -50,7 +52,7 @@
     for(const group of Object.keys(out.fields)){
       const keys=new Set(documents.flatMap(d=>safeKeys(d.fields[group])));
       for(const key of keys){
-        const records=documents.map(d=>d.fields[group][key]).filter(Boolean).sort(compare);
+        const records=documents.map(d=>d.fields[group]?.[key]).filter(Boolean).sort(compare);
         const winner=records.at(-1);let value=winner.value;
         if(group==='history'&&value!==null){
           // A deletion cuts off older answers; later independent attempts are unioned.

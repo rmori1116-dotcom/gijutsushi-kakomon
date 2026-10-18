@@ -14,16 +14,17 @@ const APPDATA = window.APPDATA;
   const safeKeys=x=>Object.keys(dict(x)).filter(k=>!['__proto__','constructor','prototype'].includes(k));
   const json=x=>JSON.stringify(x);
   function compare(a,b){return (a?.at||0)-(b?.at||0)||String(a?.actor||'').localeCompare(String(b?.actor||''));}
-  function empty(owner){return {app:'gijutsushi-drive',schema:1,owner,fields:{history:{},unsure:{},learned:{},memos:{}}};}
+  function empty(owner){return {app:'gijutsushi-drive',schema:1,owner,fields:{history:{},unsure:{},learned:{},memos:{},schedule:{}}};}
   function validate(doc,owner){
     if(doc?.app!=='gijutsushi-drive'||doc.schema!==1||doc.owner!==owner||!cleanId(owner))throw Error('アカウントまたは保存形式が一致しません。');
     for(const group of Object.keys(empty(owner).fields)){
+      if(group==='schedule'&&!doc.fields?.schedule)continue;
       if(!doc.fields||!doc.fields[group]||Array.isArray(doc.fields[group])||typeof doc.fields[group]!=='object')throw Error('保存データの形式が不正です。');
       for(const key of safeKeys(doc.fields[group])){
         const r=doc.fields[group][key];
         if(!r||!Number.isSafeInteger(r.at)||r.at<0||!cleanId(r.actor)||!Object.hasOwn(r,'value'))throw Error('保存データの更新情報が不正です。');
         if(['unsure','learned'].includes(group)&&typeof r.value!=='boolean')throw Error('チェックの形式が不正です。');
-        if(['history','memos'].includes(group)&&r.value!==null&&(typeof r.value!=='object'||Array.isArray(r.value)))throw Error('学習記録の形式が不正です。');
+        if(['history','memos','schedule'].includes(group)&&r.value!==null&&(typeof r.value!=='object'||Array.isArray(r.value)))throw Error('学習記録の形式が不正です。');
       }
     }
     return doc;
@@ -38,9 +39,10 @@ const APPDATA = window.APPDATA;
     return out;
   }
   function capture(previous,current,actor,now=Date.now()){
-    const doc=JSON.parse(json(previous));let clock=now;
-    for(const group of Object.keys(doc.fields))for(const r of Object.values(doc.fields[group]))clock=Math.max(clock,r.at+1);
+    const doc=JSON.parse(json(previous));doc.fields.schedule=doc.fields.schedule||{};let clock=now;
+    for(const group of Object.keys(doc.fields))for(const r of Object.values(doc.fields[group]||{}))clock=Math.max(clock,r.at+1);
     for(const group of Object.keys(doc.fields)){
+      if(group==='schedule'){if(current.schedule?.plan&&(!doc.fields.schedule.plan||compare(current.schedule.plan,doc.fields.schedule.plan)>0))doc.fields.schedule.plan=current.schedule.plan;continue;}
       const values=['unsure','learned'].includes(group)?Object.fromEntries((current[group]||[]).map(k=>[k,true])):dict(current[group]);
       for(const key of new Set([...safeKeys(values),...safeKeys(doc.fields[group])])){
         const value=Object.hasOwn(values,key)?values[key]:['unsure','learned'].includes(group)?false:null;
@@ -55,7 +57,7 @@ const APPDATA = window.APPDATA;
     for(const group of Object.keys(out.fields)){
       const keys=new Set(documents.flatMap(d=>safeKeys(d.fields[group])));
       for(const key of keys){
-        const records=documents.map(d=>d.fields[group][key]).filter(Boolean).sort(compare);
+        const records=documents.map(d=>d.fields[group]?.[key]).filter(Boolean).sort(compare);
         const winner=records.at(-1);let value=winner.value;
         if(group==='history'&&value!==null){
           // A deletion cuts off older answers; later independent attempts are unioned.
@@ -79,6 +81,35 @@ const APPDATA = window.APPDATA;
   const api={KEYS,LOCAL,ACTIVE,cleanId,empty,compare,validate,capture,materialize,merge,storage};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.DriveStudyCore=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Shared account plan snapshot. Defaults never overwrite another device's plan. */
+(function(root){
+ 'use strict';
+ const key=owner=>'gijutsushi_schedule_v2:'+(owner||'local');
+ function valid(value){
+  if(!value||typeof value!=='object'||!value.config||typeof value.config!=='object')return false;
+  const c=value.config;
+  if(!['start','finish','prediction','final','exam'].every(k=>typeof c[k]==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(c[k])))return false;
+  if(!(c.start<=c.finish&&c.finish<c.prediction&&c.prediction<=c.final&&c.final<c.exam))return false;
+  for(const k of ['target','weekdayNew','holidayNew','weekdayReview','holidayReview'])if(!Number.isInteger(c[k])||c[k]<0||c[k]>150)return false;
+  if(!c.weekdayNew||c.weekdayNew>100||!c.holidayNew||!c.target||c.target>100||c.weekdayReview>50||c.holidayReview>70)return false;
+  const g=value.goal;
+  return !g||(Number.isFinite(g.createdAt)&&g.baseline&&typeof g.baseline==='object'&&Array.isArray(g.rows)&&g.rows.every(r=>typeof r.day==='string'&&Number.isFinite(r.count)&&r.count>=0&&Number.isFinite(r.reviewCount)&&r.reviewCount>=0)&&Number.isFinite(g.remaining)&&g.remaining>=0);
+ }
+ function capture(raw,owner){
+  try{const s=JSON.parse(raw.getItem(key(owner))||'null');if(s?.source!=='app'||!valid(s)||!Number.isSafeInteger(s._syncAt)||s._syncAt<=0||typeof s._syncActor!=='string')return {};
+   return {plan:{at:s._syncAt,actor:s._syncActor,value:{config:s.config,goal:s.goal||null,checks:s.checks||{},notes:s.notes||{}}}};
+  }catch(e){return {};}
+ }
+ function apply(raw,owner,record){
+  if(!record||!valid(record.value))return false;
+  const existing=capture(raw,owner).plan;
+  if(existing&&(existing.at>record.at||(existing.at===record.at&&existing.actor>=record.actor)))return false;
+  let previous={};try{previous=JSON.parse(raw.getItem(key(owner))||'{}')||{};}catch(e){}
+  raw.setItem(key(owner),JSON.stringify({...previous,...record.value,source:'app',_syncAt:record.at,_syncActor:record.actor}));return true;
+ }
+ const api={key,valid,capture,apply};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.ScheduleSync=api;
 })(typeof window!=='undefined'?window:globalThis);
 
 const DRIVE_CLIENT_ID = "966705122251-pjqqao4get3tfhubhu4vlums07fijah7.apps.googleusercontent.com";
@@ -3227,7 +3258,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   const back=document.createElement('a');back.href='schedule/';back.className='btn btn-ghost btn-sm';back.textContent='← スケジュールへ戻る';
   $('quiz').prepend(back);const resultBack=back.cloneNode(true);$('result').prepend(resultBack);
   const url=new URL(location.href);url.searchParams.delete('scheduleTask');window.history.replaceState(null,'',url);
-  if(launch.topicId){const t=BOOK_TOPIC_BY_ID.get(launch.topicId);if(t)bookShow(t.subject,t.parentId,t.id);}
+  if(launch.topicId&&!launch.ids.length){const t=BOOK_TOPIC_BY_ID.get(launch.topicId);if(t)bookShow(t.subject,t.parentId,t.id);}
   else if(launch.ids.length)startQuiz([...new Set(launch.ids)].map(id=>QUESTION_BY_ID.get(id)),'study');
 })();
 
@@ -3243,7 +3274,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   let ledger;
   function read(k,fallback){try{return JSON.parse(raw.getItem(k)||'null')??fallback;}catch(e){return fallback;}}
   try{ledger=C.validate(read(ledgerKey,C.empty(owner)),owner);}catch(e){ledger=C.empty(owner);}
-  function localData(){return {history,unsure:[...unsure],learned:[...bookLearned],memos};}
+  function localData(){return {history,unsure:[...unsure],learned:[...bookLearned],memos,schedule:window.ScheduleSync?window.ScheduleSync.capture(raw,owner):{}};}
   function persist(doc){raw.setItem(ledgerKey,JSON.stringify(doc));ledger=doc;}
   function capture(){const next=C.capture(ledger,localData(),actor);persist(next);return next;}
   function status(message){statusEl.textContent=message;}
@@ -3258,7 +3289,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     if(!DRIVE_CLIENT_ID)status('Google接続は準備中です。現在の記録はこの端末に保存されます。');
   }
   const card=document.createElement('section');card.className='card';card.id='driveSyncCard';
-  card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモを保存します。保存は端末からドライブへ、読み込みはドライブから端末へ反映します。既存記録と統合します。自動の保存・読み込みは行いません。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
+  card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモ・スケジュールの目標と計画を保存します。保存は端末からドライブへ、読み込みはドライブから端末へ反映します。既存記録と統合します。自動の保存・読み込みは行いません。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
   document.getElementById('recordCard')?.after(card);
   const identity=card.querySelector('#driveIdentity'),statusEl=card.querySelector('#driveSyncStatus');
   const connect=card.querySelector('#driveConnect'),sync=card.querySelector('#driveNow'),logout=card.querySelector('#driveLogout'),migrate=card.querySelector('#driveImport');
@@ -3294,6 +3325,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
       localStorage.setItem(UNSURE_KEY,JSON.stringify(nextUnsure));
       localStorage.setItem(BOOK_LEARNED_KEY,JSON.stringify(nextLearned));
       localStorage.setItem(MEMO_STORE,JSON.stringify(nextMemos));
+      if(window.ScheduleSync)window.ScheduleSync.apply(raw,owner,doc.fields.schedule?.plan);
       history=nextHistory;unsure=new Set(nextUnsure);bookLearned=new Set(nextLearned);memos=nextMemos;
       memoLoadCurrent();refreshSetup();if(!$('textbook').classList.contains('hide'))renderBook();
     }finally{suppress=false;}
@@ -3417,7 +3449,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   window.addEventListener('study-local-change',schedule);
   window.addEventListener('online',()=>{update();prepareSDK().catch(fail);});
   window.addEventListener('offline',()=>{status('オフラインです。記録は端末内に保存されます。');update();});
-  window.addEventListener('storage',e=>{if(e.key===C.ACTIVE&&raw.getItem(C.ACTIVE)!==owner){stopped=true;token='';location.reload();}});
+  window.addEventListener('storage',e=>{if(window.ScheduleSync&&e.key===window.ScheduleSync.key(owner))schedule();if(e.key===C.ACTIVE&&raw.getItem(C.ACTIVE)!==owner){stopped=true;token='';location.reload();}});
   const notice=raw.getItem('gijutsushi_drive_notice');
   update();status(notice|| (owner?'端末内のアカウント別記録を表示しています。保存または読み込みを選んでください。':'未接続です。現在の記録は端末内に保存されています。'));
   raw.removeItem('gijutsushi_drive_notice');if(!DRIVE_CLIENT_ID)update();

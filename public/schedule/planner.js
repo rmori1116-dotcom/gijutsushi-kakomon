@@ -68,13 +68,35 @@
    const baseline=goal.baseline[q.id]||0,isNew=!baseline;
    const events=(h.attempts||[]).slice().sort((a,b)=>a.at-b.at);
    // Only a complete timeline identifies the first-ever attempt reliably.
-   const first=isNew&&events.length===h.n?events[0]:null;
+   const first=events.length===h.n?events[0]:null;
    if(isNew){overall++;if(!first||first.at<goal.createdAt)undated++;else{const d=day(new Date(first.at));if(d>=from&&d<=to)actual++;}}
-   for(const e of events){if(e.at<goal.createdAt||e===first)continue;const d=day(new Date(e.at));if(d>=from&&d<=to)reviewed.add(d+':'+q.id);}
+   for(const e of events){if(e===first)continue;const d=day(new Date(e.at));if(d>=from&&d<=to)reviewed.add(d+':'+q.id);}
   }
   const target=rows.reduce((n,r)=>n+r.count,0),reviewTarget=rows.reduce((n,r)=>n+r.reviewCount,0);
   return {target,actual,gap:actual-target,overall,undated,reviews:reviewed.size,reviewTarget,rate:target?actual/target:null};
  }
- const api={subjects,defaults,day,date,add,days,validDay,validate,dayType,capacity,normalize,stats,plan,allocate,review,createGoal,goalProgress};
+ function suggestThemes(questions,history,topics,count){
+  if(count<=0)return [];
+  const groups=topics.map((topic,index)=>{
+   const all=questions.filter(q=>q.topicId===topic.id&&q.answer!=null),pending=all.filter(q=>!history[q.id]?.n);
+   const done=all.filter(q=>history[q.id]?.n);
+   return {topic,index,questions:pending,untouched:done.length===0};
+  }).filter(g=>g.questions.length);
+  // Primary themes only, so no question is proposed twice via related themes.
+  const rates=stats(questions,history);
+  groups.sort((a,b)=>Number(b.untouched)-Number(a.untouched)||
+   (rates.find(s=>s.subject===a.questions[0].subject)?.rate??0)-(rates.find(s=>s.subject===b.questions[0].subject)?.rate??0)||a.index-b.index);
+  const result=[];let n=0;
+  for(const group of groups){
+   if(n>=count)break;
+   if(n&&Math.abs(n-count)<=Math.abs(n+group.questions.length-count))break;
+   const left=count-n;
+   // Very large themes continue in the next session, never mix random topics.
+   const questions=group.questions.length>Math.max(10,left*1.5)?group.questions.slice(0,left):group.questions;
+   result.push({...group,questions,totalPending:group.questions.length});n+=questions.length;
+  }
+  return result;
+ }
+ const api={subjects,defaults,day,date,add,days,validDay,validate,dayType,capacity,normalize,stats,plan,allocate,review,createGoal,goalProgress,suggestThemes};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Planner=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
