@@ -97,6 +97,23 @@
   }
   return result;
  }
- const api={subjects,defaults,day,date,add,days,validDay,validate,dayType,capacity,normalize,stats,plan,allocate,review,createGoal,goalProgress,suggestThemes};
+ function activity(questions,history,from,to){
+  const fresh=new Set(),repeated=new Set(),reviewDays=new Set();let undated=0;
+  for(const q of questions){
+   const h=history[q.id];if(!h?.n)continue;
+   const events=(h.attempts||[]).filter(e=>Number.isFinite(e.at)&&typeof e.ok==='boolean').slice().sort((a,b)=>a.at-b.at);
+   const first=events.length===h.n?events[0]:null;
+   if(!first)undated++;
+   for(const e of events){const d=day(new Date(e.at));if(d<from||d>to)continue;
+    if(e===first)fresh.add(q.id);else{repeated.add(q.id);reviewDays.add(d+':'+q.id);}
+   }
+  }
+  return {fresh:fresh.size,reviews:reviewDays.size,reviewIds:[...repeated],undated};
+ }
+ function targets(c,from,to){
+  const rows=days(from,to).filter(d=>d>=c.start&&d<=c.finish).map(d=>({day:d,...capacity(d,c)}));
+  return {fresh:rows.reduce((n,r)=>n+r.newCount,0),reviews:rows.reduce((n,r)=>n+r.reviewCount,0),rows};
+ }
+ const api={subjects,defaults,day,date,add,days,validDay,validate,dayType,capacity,normalize,stats,plan,allocate,review,createGoal,goalProgress,suggestThemes,activity,targets};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Planner=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
