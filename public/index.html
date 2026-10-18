@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-<link rel="stylesheet" href="styles.css?v=8a0b992745">
+<link rel="stylesheet" href="styles.css?v=23d0d75674">
 
 </head>
 <body>
@@ -59,6 +59,7 @@
       </div>
     </div>
     <div class="homeScope"><label for="homeSubject">おすすめの科目</label><select id="homeSubject"><option value="all">3科目すべて</option><option value="基礎科目">基礎科目</option><option value="適性科目">適性科目</option><option value="専門科目(建設部門)">建設部門</option></select><p id="homeStats" class="meta"></p></div>
+    <div class="recommendationCard"><h3>学習スケジュール</h3><p class="meta">日別・週別の予定、目標に対する進捗、休みの日の再計画を確認できます。</p><a class="btn btn-primary btn-sm" href="schedule/">予定と進捗を見る →</a></div>
     <div id="homeRecommendation" class="recommendationCard hide" aria-live="polite"></div>
     <div id="dueReviewCard" class="recommendationCard hide" aria-live="polite">
       <h3>今日の復習</h3><p id="dueReviewInfo"></p>
@@ -419,7 +420,7 @@
 <script>
 /* データを読み込んでからアプリ本体(app.js)を起動する */
 (function () {
-  var V = '8a0b992745';
+  var V = '23d0d75674';
   var startupError = false;
   // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
   window.addEventListener('error', function (event) {

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153e38"><title>学習スケジュール｜技術士第一次試験</title><link rel="stylesheet" href="schedule.css"><script defer src="planner.js"></script><script defer src="schedule.js"></script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('../sw.js',{scope:'../',updateViaCache:'none'}).catch(console.warn);</script></head>
+<body><header class="top"><a class="brand" href="../index.html">技術士第一次試験 <span>学習アプリ ↗</span></a><span class="prototype">スケジュール · 試用版</span></header>
+<main><div class="pagehead"><div><p class="eyebrow">STUDY PLANNER</p><h1>続けられるペースで、<br class="mobile">試験の日まで。</h1><p class="muted">家族の時間も、復習の時間も。残りの問題から、今日の予定を整えます。</p></div><button id="settingsShortcut" class="quiet">計画を調整 ↗</button></div>
+<div class="sourcebar"><span id="sourceLabel">データを読み込み中…</span><div><button id="sampleButton" class="textbutton">サンプルで試す</button><label class="textbutton import">学習記録を取り込む<input id="historyImport" type="file" accept=".json,application/json" hidden></label></div></div>
+<p id="notice" role="status" aria-live="polite"></p>
+<nav class="tabs" aria-label="スケジュールの表示"><button data-tab="today" class="active" aria-current="page">今日の予定</button><button data-tab="calendar">カレンダー</button><button data-tab="progress">進捗・弱点</button><button data-tab="settings">計画の設定</button></nav>
+<div id="loading" class="panel">問題データを読み込んでいます。</div>
+<section id="today" class="view" hidden></section><section id="calendar" class="view" hidden></section><section id="progress" class="view" hidden></section>
+<section id="settings" class="view" hidden><div class="panel"><p class="eyebrow">YOUR PACE</p><h2>無理のない計画に調整</h2><p class="muted">日程は会話まとめの設定です。試験の公式日程を確認し、必要に応じて変更してください。</p><form id="configForm"><div id="configFields" class="formgrid"></div><p class="hint">休日は土日を初期値にしています。祝日・出勤日・お休みはカレンダーから個別に指定できます。</p><button type="submit" class="primary">保存して再計画する</button></form></div><div class="panel"><h2>保存とバックアップ</h2><p class="muted">計画・チェック・試作品内の演習記録をこのブラウザーに保存します。本番アプリの記録は書き換えません。Google Drive同期は試作品では未対応です。</p><div class="actions"><button id="exportPlan">計画を書き出す</button><label class="button import">計画を読み込む<input id="planImport" type="file" accept=".json,application/json" hidden></label><button id="emptyButton" class="quiet">記録なしで試す</button></div></div></section>
+<footer>今日のチェックと、問題を解いた記録は別々に管理します。正答率は合格を保証するものではありません。<br>試作品 v1 · データは端末内で処理します。</footer></main>
+<dialog id="detail"><div class="dialoghead"><span id="detailLabel">学習</span><button id="closeDialog" class="quiet" aria-label="閉じる">閉じる ×</button></div><div id="detailBody"></div></dialog>
+</body></html>
