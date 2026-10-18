@@ -21,7 +21,6 @@ function render(){
  const done=P.activity(qs,state.history,today,today);model=P.plan(qs,state.history,state.config,today,done.fresh);
  document.querySelectorAll('.view').forEach(e=>e.hidden=e.id!==tab);
  document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',e.dataset.tab===tab);if(e.dataset.tab===tab)e.setAttribute('aria-current','page');else e.removeAttribute('aria-current');});
- $('sourceLabel').textContent='解答の記録は過去問アプリと自動連動しています。';
  if(tab==='today')renderToday();if(tab==='calendar')renderWeek();if(tab==='progress')renderProgress();if(tab==='settings')renderSettings();
 }
 function switchTab(name){tab=name;render();}

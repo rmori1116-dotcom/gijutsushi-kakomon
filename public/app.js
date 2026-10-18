@@ -3292,7 +3292,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   }
   const card=document.createElement('section');card.className='card';card.id='driveSyncCard';
   card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモ・スケジュールの目標と計画を保存します。同期ボタン1つで、学習・復習記録とスケジュールの目標・計画をまとめて送受信し、両方の端末の記録を統合します。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
-  document.getElementById('recordCard')?.after(card);
+  document.getElementById('studyPane')?.prepend(card);
   const identity=card.querySelector('#driveIdentity'),statusEl=card.querySelector('#driveSyncStatus');
   const connect=card.querySelector('#driveConnect'),sync=card.querySelector('#driveNow'),logout=card.querySelector('#driveLogout'),migrate=card.querySelector('#driveImport');
   sync.textContent='すべての記録を同期';
