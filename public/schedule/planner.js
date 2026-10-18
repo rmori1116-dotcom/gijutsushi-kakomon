@@ -1,7 +1,7 @@
 (function(root){
  'use strict';
  const subjects=['基礎科目','適性科目','専門科目(建設部門)'];
- const defaults={start:'2026-10-19',finish:'2026-11-19',prediction:'2026-11-20',final:'2026-11-21',exam:'2026-11-22',target:70,weekdayNew:25,holidayNew:36,weekdayReview:10,holidayReview:15,holidaySets:5,newMinutes:2.4,reviewMinutes:3,overrides:{}};
+ const defaults={start:'2026-10-19',finish:'2026-11-19',prediction:'2026-11-20',final:'2026-11-21',exam:'2026-11-22',target:70,weekdayNew:25,holidayNew:36,weekdayReview:10,holidayReview:15,overrides:{}};
  const day=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
  const date=s=>new Date(s+'T12:00:00');
  function add(s,n){const d=date(s);d.setDate(d.getDate()+n);return day(d);}
@@ -11,17 +11,15 @@
   if(!['start','finish','prediction','final','exam'].every(k=>validDay(c[k])))return '日付を正しく入力してください。';
   if(!(c.start<=c.finish&&c.finish<c.prediction&&c.prediction<=c.final&&c.final<c.exam))return '開始日 → 過去問完了日 → 予想問題日 → 最終確認日 → 試験日の順で指定してください。';
   if((date(c.exam)-date(c.start))/86400000>365)return '計画期間は1年以内にしてください。';
-  const limits={target:[1,100],weekdayNew:[1,100],holidayNew:[1,150],weekdayReview:[0,50],holidayReview:[0,70],holidaySets:[1,8],newMinutes:[1,15],reviewMinutes:[1,15]};
-  for(const [k,[min,max]]of Object.entries(limits))if(!Number.isFinite(c[k])||c[k]<min||c[k]>max)return '時間・問題数・目標値を入力範囲内で設定してください。';
+  const limits={target:[1,100],weekdayNew:[1,100],holidayNew:[1,150],weekdayReview:[0,50],holidayReview:[0,70]};
+  for(const [k,[min,max]]of Object.entries(limits))if(!Number.isFinite(c[k])||!Number.isInteger(c[k])||c[k]<min||c[k]>max)return '問題数・目標値を入力範囲内で設定してください。';
   return '';
  }
  function dayType(d,c){return c.overrides[d]||([0,6].includes(date(d).getDay())?'holiday':'weekday');}
  function capacity(d,c){
-  const type=dayType(d,c);if(type==='rest')return {type,minutes:0,newCount:0,reviewCount:0};
-  const holiday=type==='holiday',minutes=holiday?c.holidaySets*30:90;
-  const reviewCount=Math.min(holiday?c.holidayReview:c.weekdayReview,Math.floor((holiday?minutes:30)/c.reviewMinutes));
-  const newCount=Math.max(0,Math.min(holiday?c.holidayNew:c.weekdayNew,Math.floor((holiday?minutes-reviewCount*c.reviewMinutes:60)/c.newMinutes)));
-  return {type,minutes,newCount,reviewCount};
+  const type=dayType(d,c);if(type==='rest')return {type,newCount:0,reviewCount:0};
+  const holiday=type==='holiday';
+  return {type,newCount:holiday?c.holidayNew:c.weekdayNew,reviewCount:holiday?c.holidayReview:c.weekdayReview};
  }
  function normalize(raw,questions){
   const source=raw?.history??raw;if(!source||typeof source!=='object'||Array.isArray(source))throw Error('学習履歴のオブジェクトが見つかりません。');
@@ -34,15 +32,16 @@
   return subjects.map(subject=>{const qs=questions.filter(q=>q.subject===subject&&q.answer!=null),done=qs.filter(q=>history[q.id]?.n>0),scored=done.filter(q=>typeof history[q.id].lastOk==='boolean'),correct=scored.filter(q=>history[q.id].lastOk).length;
    return {subject,total:qs.length,done:done.length,left:qs.length-done.length,correct,scored:scored.length,rate:scored.length?correct/scored.length:null};});
  }
- function plan(questions,history,c,today){
+ function plan(questions,history,c,today,todayDone=0){
   const remaining=stats(questions,history).reduce((n,s)=>n+s.left,0);
   const rows=days(today>c.start?today:c.start,c.finish).map(d=>({day:d,...capacity(d,c),count:0}));
-  const totalCapacity=rows.reduce((n,r)=>n+r.newCount,0),assign=Math.min(remaining,totalCapacity);
-  if(totalCapacity){let sum=0;for(const r of rows){r.exact=assign*r.newCount/totalCapacity;r.count=Math.floor(r.exact);sum+=r.count;}
-   const order=rows.filter(r=>r.newCount).slice().sort((a,b)=>(b.exact-b.count)-(a.exact-a.count)||a.day.localeCompare(b.day));
-   for(let i=0;i<assign-sum;i++)order[i].count++;
-  }
-  return {rows,remaining,totalCapacity,shortfall:Math.max(0,remaining-totalCapacity),spare:Math.max(0,totalCapacity-remaining)};
+  // Already completed new questions reduce today's remaining quota, not future quotas.
+  for(const r of rows)if(r.day===today)r.newCount=Math.max(0,r.newCount-Math.max(0,todayDone));
+  const totalCapacity=rows.reduce((n,r)=>n+r.newCount,0);
+  let left=remaining;
+  for(const r of rows){r.count=Math.min(left,r.newCount);left-=r.count;}
+  const activeDays=rows.filter(r=>r.newCount>0).length;
+  return {rows,remaining,totalCapacity,shortfall:Math.max(0,remaining-totalCapacity),spare:Math.max(0,totalCapacity-remaining),neededPerDay:activeDays?Math.ceil(remaining/activeDays):null};
  }
  function allocate(count,rows,target){
   const out=new Map(rows.map(s=>[s.subject,0]));
@@ -63,7 +62,7 @@
  }
  function goalProgress(questions,history,goal,from,to){
   const rows=goal.rows.filter(r=>r.day>=from&&r.day<=to);
-  let actual=0,overall=0,undated=0,reviews=0;
+  let actual=0,overall=0,undated=0;const reviewed=new Set();
   for(const q of questions){
    const h=history[q.id];if(!h?.n)continue;
    const baseline=goal.baseline[q.id]||0,isNew=!baseline;
@@ -71,10 +70,10 @@
    // Only a complete timeline identifies the first-ever attempt reliably.
    const first=isNew&&events.length===h.n?events[0]:null;
    if(isNew){overall++;if(!first||first.at<goal.createdAt)undated++;else{const d=day(new Date(first.at));if(d>=from&&d<=to)actual++;}}
-   for(const e of events){if(e.at<goal.createdAt||e===first)continue;const d=day(new Date(e.at));if(d>=from&&d<=to)reviews++;}
+   for(const e of events){if(e.at<goal.createdAt||e===first)continue;const d=day(new Date(e.at));if(d>=from&&d<=to)reviewed.add(d+':'+q.id);}
   }
   const target=rows.reduce((n,r)=>n+r.count,0),reviewTarget=rows.reduce((n,r)=>n+r.reviewCount,0);
-  return {target,actual,gap:actual-target,overall,undated,reviews,reviewTarget,rate:target?actual/target:null};
+  return {target,actual,gap:actual-target,overall,undated,reviews:reviewed.size,reviewTarget,rate:target?actual/target:null};
  }
  const api={subjects,defaults,day,date,add,days,validDay,validate,dayType,capacity,normalize,stats,plan,allocate,review,createGoal,goalProgress};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Planner=api;
