@@ -3283,6 +3283,8 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   function update(){
     const who=read(identityKey,{});
     identity.textContent=owner?(who.sub===owner?who.email:'選択済みのGoogleアカウント'):'端末内の記録';
+    connect.hidden=!!owner;sync.hidden=!owner;
+    sync.textContent=busy?'同期中…':'すべての記録を同期';
     connect.disabled=busy||!DRIVE_CLIENT_ID||navigator.onLine===false;
     sync.disabled=busy||!DRIVE_CLIENT_ID;
     load.disabled=busy||!DRIVE_CLIENT_ID;
@@ -3291,8 +3293,8 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     if(!DRIVE_CLIENT_ID)status('Google接続は準備中です。現在の記録はこの端末に保存されます。');
   }
   const card=document.createElement('section');card.className='card';card.id='driveSyncCard';
-  card.innerHTML='<h3>アカウントと端末間の引き継ぎ</h3><p id="driveIdentity" class="meta"></p><p class="meta">Googleドライブのアプリ専用領域に、解答履歴・復習予定・学習済みチェック・自信なし・手書きメモ・スケジュールの目標と計画を保存します。同期ボタン1つで、学習・復習記録とスケジュールの目標・計画をまとめて送受信し、両方の端末の記録を統合します。</p><div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" id="driveConnect">Googleアカウントを接続</button><button type="button" class="btn btn-ghost btn-sm" id="driveNow">ドライブへ保存</button><button type="button" class="btn btn-ghost btn-sm" id="driveLoad">ドライブから読み込み</button><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p>';
-  document.getElementById('studyPane')?.prepend(card);
+  card.innerHTML='<div class="syncCompactHead"><div><h3>アカウントと記録の同期</h3><p id="driveIdentity" class="meta"></p></div><div class="syncCompactAction"><button type="button" class="btn btn-primary btn-sm" id="driveConnect">Googleで接続</button><button type="button" class="btn btn-primary btn-sm" id="driveNow">すべての記録を同期</button></div></div><p class="syncCompactHint">学習・復習記録と目標・計画を、まとめて引き継ぎます。</p><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p><details class="syncCompactMore"><summary>アカウント設定・その他</summary><div class="row"><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前の端末内記録を取り込む</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p class="meta">同期すると、Googleドライブのアプリ専用領域で両端末の記録を統合します。</p></details><button type="button" id="driveLoad" hidden>すべての記録を同期</button>';
+  document.getElementById('recordCard')?.before(card);
   const identity=card.querySelector('#driveIdentity'),statusEl=card.querySelector('#driveSyncStatus');
   const connect=card.querySelector('#driveConnect'),sync=card.querySelector('#driveNow'),logout=card.querySelector('#driveLogout'),migrate=card.querySelector('#driveImport');
   sync.textContent='すべての記録を同期';
@@ -3452,7 +3454,7 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   window.addEventListener('offline',()=>{status('オフラインです。記録は端末内に保存されます。');update();});
   window.addEventListener('storage',e=>{if(window.ScheduleSync&&e.key===window.ScheduleSync.key(owner))schedule();if(e.key===C.ACTIVE&&raw.getItem(C.ACTIVE)!==owner){stopped=true;token='';location.reload();}});
   const notice=raw.getItem('gijutsushi_drive_notice');
-  update();status(notice|| (owner?'端末内のアカウント別記録を表示しています。同期を選んでください。':'未接続です。現在の記録は端末内に保存されています。'));
+  update();status(notice|| (owner?'別の端末で使う前後に、同期してください。':'Googleに接続すると、別の端末へ記録を引き継げます。'));
   raw.removeItem('gijutsushi_drive_notice');if(!DRIVE_CLIENT_ID)update();
   prepareSDK().catch(fail);
   }catch(error){
