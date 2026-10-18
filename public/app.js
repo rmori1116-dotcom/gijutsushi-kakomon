@@ -490,6 +490,22 @@ function dueReviewQuestions(topicId=null,today=studyDayKey()){
   }).sort((a,b)=>studyReviewSchedule(a,history[a.id],today).due.localeCompare(studyReviewSchedule(b,history[b.id],today).due)||
     Number(history[b.id].lastOk===false)-Number(history[a.id].lastOk===false)||a.id.localeCompare(b.id));
 }
+function dueReviewThemes(){
+  const groups=new Map();
+  dueReviewQuestions().forEach(q=>{
+    const key=q.topicId||q.subject;
+    if(!groups.has(key))groups.set(key,{key,topic:BOOK_TOPIC_BY_ID.get(q.topicId),subject:q.subject,questions:[],n:0,ok:0});
+    groups.get(key).questions.push(q);
+  });
+  QUESTIONS.forEach(q=>{
+    if(q.kind==='prediction'||isNoAnswer(q))return;
+    const group=groups.get(q.topicId||q.subject),h=history[q.id];
+    if(group&&h?.n>0){group.n+=h.n;group.ok+=h.ok||0;}
+  });
+  return [...groups.values()].map(g=>({...g,rate:g.n?g.ok/g.n:null}))
+    .sort((a,b)=>(a.rate??1)-(b.rate??1)||b.questions.length-a.questions.length||a.key.localeCompare(b.key));
+}
+function orderedDueReviewQuestions(){return dueReviewThemes().flatMap(g=>g.questions);}
 function renderDueReview(){
   const due=dueReviewQuestions(),scheduled=QUESTIONS.map(q=>studyReviewSchedule(q,history[q.id])).filter(Boolean);
   const card=$('dueReviewCard');card.classList.toggle('hide',!scheduled.length);
@@ -497,11 +513,22 @@ function renderDueReview(){
   const next=scheduled.filter(s=>s.due>studyDayKey()).map(s=>s.due).sort()[0];
   $('dueReviewInfo').textContent=due.length?`${due.length}問の復習日が来ています（${counts}）。`:
     `今日の復習は0問です。${next?`次の復習日は${next}です。`:''}`;
+  const host=$('dueReviewThemes');host.replaceChildren();
+  if(due.length)host.appendChild(bookNode('p','meta','主テーマ別・累計正答率の低い順（公式過去問の全解答で集計）'));
+  dueReviewThemes().forEach(group=>{
+    const row=bookNode('div','bookSection');
+    row.appendChild(bookNode('strong','',group.topic?.title||`${group.subject}（テーマ未分類）`));
+    row.appendChild(bookNode('p','meta',`${group.subject} ／ 累計正答率 ${group.rate===null?'未解答':Math.round(group.rate*100)+'%'}（${group.ok}/${group.n}回） ／ 今日の復習 ${group.questions.length}問`));
+    const actions=bookNode('div','recommendationActions');
+    actions.appendChild(bookButton(`このテーマを復習（${group.questions.length}問）`,()=>startQuiz(group.questions.slice(),'study'),'btn btn-primary btn-sm'));
+    if(group.topic)actions.appendChild(bookButton('教科書を開く',()=>bookShow(group.topic.subject,group.topic.parentId,group.topic.id),'btn btn-ghost btn-sm'));
+    row.appendChild(actions);host.appendChild(row);
+  });
   $('btnDueReview').disabled=!due.length;$('btnDueReviewAll').classList.toggle('hide',due.length<=10);
   $('btnDueReview').textContent=`復習を${Math.min(10,due.length)}問始める`;
 }
-$('btnDueReview').addEventListener('click',()=>{const due=dueReviewQuestions().slice(0,10);if(due.length)startQuiz(due,'study');});
-$('btnDueReviewAll').addEventListener('click',()=>{const due=dueReviewQuestions();if(due.length)startQuiz(due,'study');});
+$('btnDueReview').addEventListener('click',()=>{const due=orderedDueReviewQuestions().slice(0,10);if(due.length)startQuiz(due,'study');});
+$('btnDueReviewAll').addEventListener('click',()=>{const due=orderedDueReviewQuestions();if(due.length)startQuiz(due,'study');});
 // Refresh the day boundary when returning to the app, without interrupting a quiz.
 window.addEventListener('focus',()=>{if(!$('setup').classList.contains('hide'))renderDueReview();});
 function saveUnsure(){ try{ localStorage.setItem(UNSURE_KEY,JSON.stringify([...unsure])); }catch(e){} }

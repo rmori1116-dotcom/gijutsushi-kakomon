@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-<link rel="stylesheet" href="styles.css?v=3002d2ed92">
+<link rel="stylesheet" href="styles.css?v=8a0b992745">
 
 </head>
 <body>
@@ -62,6 +62,7 @@
     <div id="homeRecommendation" class="recommendationCard hide" aria-live="polite"></div>
     <div id="dueReviewCard" class="recommendationCard hide" aria-live="polite">
       <h3>今日の復習</h3><p id="dueReviewInfo"></p>
+      <div id="dueReviewThemes"></div>
       <div class="recommendationActions"><button id="btnDueReview" class="btn btn-primary btn-sm" type="button">復習を始める</button><button id="btnDueReviewAll" class="btn btn-ghost btn-sm" type="button">すべて復習する</button></div>
     </div>
     <div id="homeTools">
@@ -418,7 +419,7 @@
 <script>
 /* データを読み込んでからアプリ本体(app.js)を起動する */
 (function () {
-  var V = '3002d2ed92';
+  var V = '8a0b992745';
   var startupError = false;
   // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
   window.addEventListener('error', function (event) {
