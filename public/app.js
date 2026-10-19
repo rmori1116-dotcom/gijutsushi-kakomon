@@ -2030,9 +2030,10 @@ $('fileImport').addEventListener('change',e=>{
   e.target.value='';
 });
 $('btnReset').addEventListener('click', ()=>{
-  if(!confirm('現在のアカウント（未接続なら端末内）の解答・復習記録、学習済みチェック、自信なし、手書きメモ、途中の学習をすべて削除します。元に戻せません。必要なら先にJSON保存してください。目標・計画は残ります。同期すると削除も他端末へ反映されます。削除しますか？')) return;
+  if(!confirm('現在のアカウント（未接続なら端末内）の解答・復習記録、学習済みチェック、自信なし、手書きメモ、途中の学習をすべて削除します。本当に削除しますか？必要なら先にJSON保存してください。目標・計画とドライブの保存データは残ります。ドライブに保存済みの記録は、再び同期すると復元されます。')) return;
   memoFlush(); memos={}; localStorage.setItem(MEMO_STORE,JSON.stringify(memos)); memoLoadCurrent();
   history={}; unsure=new Set(); bookLearned.clear(); saveBookLearned(); saveHistory(); saveUnsure(); clearSession(); refreshSetup();
+  window.dispatchEvent(new Event('study-device-reset'));
 });
 
 /* ---------- 図表の拡大表示 ---------- */
@@ -3290,17 +3291,19 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     sync.disabled=busy||!DRIVE_CLIENT_ID;
     load.disabled=busy||!DRIVE_CLIENT_ID;
     logout.disabled=busy||!owner;
-    migrate.disabled=busy;
+    migrate.disabled=busy;driveDelete.disabled=busy||!owner;
+    const reset=document.getElementById('btnReset');if(reset)reset.disabled=busy;
     if(!DRIVE_CLIENT_ID)status('Google接続は準備中です。現在の記録はこの端末に保存されます。');
   }
   const card=document.createElement('section');card.className='card';card.id='driveSyncCard';
-  card.innerHTML='<div class="syncCompactHead"><div><h3>アカウントと記録の同期</h3><p id="driveIdentity" class="meta"></p></div><div class="syncCompactAction"><button type="button" class="btn btn-primary btn-sm" id="driveConnect">Googleで接続</button><button type="button" class="btn btn-primary btn-sm" id="driveNow">すべての記録を同期</button></div></div><p class="syncCompactHint">学習・復習記録と目標・計画を、まとめて引き継ぎます。</p><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p><div id="syncFileActions" class="row syncFileActions"></div><p class="meta syncFileHint">JSON保存には手書きメモも含まれます。</p><details class="syncCompactMore"><summary>アカウント設定・その他</summary><div class="row"><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前保存した学習記録を取り込む（JSON）</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button></div><p class="meta">同期すると、Googleドライブのアプリ専用領域で両端末の記録を統合します。</p></details><button type="button" id="driveLoad" hidden>すべての記録を同期</button>';
+  card.innerHTML='<div class="syncCompactHead"><div><h3>アカウントと記録の同期</h3><p id="driveIdentity" class="meta"></p></div><div class="syncCompactAction"><button type="button" class="btn btn-primary btn-sm" id="driveNow">すべての記録を同期</button></div></div><p class="syncCompactHint">学習・復習記録と目標・計画を、まとめて引き継ぎます。</p><p id="driveSyncStatus" class="meta" role="status" aria-live="polite"></p><details class="syncCompactMore"><summary>アカウント設定・その他</summary><button type="button" class="btn btn-primary btn-sm" id="driveConnect">Googleで接続</button><div id="syncFileActions" class="row syncFileActions"></div><p class="meta syncFileHint">JSON保存には手書きメモも含まれます。</p><div class="row"><button type="button" class="btn btn-ghost btn-sm" id="driveImport">以前保存した学習記録を取り込む（JSON）</button><button type="button" class="btn btn-ghost btn-sm" id="driveLogout">ログアウト</button><button type="button" class="btn btn-ghost btn-sm" id="driveDelete">ドライブの保存データを削除</button></div><p class="meta">同期すると、Googleドライブのアプリ専用領域で両端末の記録を統合します。</p></details><button type="button" id="driveLoad" hidden>すべての記録を同期</button>';
   document.getElementById('recordCard')?.before(card);
   for(const id of ['btnExport','btnReset']){const button=document.getElementById(id);if(button)card.querySelector('#syncFileActions').append(button);}
   const importFile=document.getElementById('fileImport');if(importFile)card.append(importFile);
   document.getElementById('recordTransfer')?.remove();
   const identity=card.querySelector('#driveIdentity'),statusEl=card.querySelector('#driveSyncStatus');
   const connect=card.querySelector('#driveConnect'),sync=card.querySelector('#driveNow'),logout=card.querySelector('#driveLogout'),migrate=card.querySelector('#driveImport');
+  const driveDelete=card.querySelector('#driveDelete');
   sync.textContent='すべての記録を同期';
   const load=card.querySelector('#driveLoad');load.hidden=true;
   card.querySelector('h3').textContent='アカウントと記録の同期';
@@ -3366,6 +3369,16 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
     if(!$('quiz').classList.contains('hide')||!$('memo').classList.contains('hide')){status('学習中の記録は端末内に保存済みです。学習画面を閉じてから、同期を押してください。');return;}
     busy=true;update();status(mode==='save'?'保存する記録を確認しています…':'ドライブから学習記録を読み込んでいます…');
     try{
+      if(mode==='delete'){
+        const files=await listFiles();
+        // Verify every file belongs to the active account before deleting any.
+        for(const file of files)C.validate(await request('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media'),owner);
+        if(!files.length){status('ドライブに保存データはありません。');return;}
+        if(!confirm('ドライブに保存された学習・復習記録、手書きメモ、目標・計画の全バックアップ（'+files.length+'件）を本当に削除しますか？元に戻せません。この端末や他端末の記録は残ります。再び同期すると端末の記録がドライブに保存されます。'))return;
+        fileId=null;raw.removeItem('gijutsushi_plan_drive_file:'+owner);
+        for(const file of files)await request('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id),{method:'DELETE'});
+        status('ドライブの保存データを削除しました。端末内の記録は残っています。');return;
+      }
       // Another open schedule tab may already have synced this account.
       const external=C.validate(read(ledgerKey,C.empty(owner)),owner);
       const refreshed=C.merge([external,capture()],owner,mergeStudyRecord);
@@ -3440,6 +3453,8 @@ renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
   }
   sync.addEventListener('click',()=>runAction('save'));
   load.addEventListener('click',()=>runAction('load'));
+  driveDelete.addEventListener('click',()=>runAction('delete'));
+  window.addEventListener('study-device-reset',()=>{persist(C.empty(owner));status('端末の記録を削除しました。ドライブに保存済みの記録は、同期すると復元されます。');});
   logout.addEventListener('click',()=>{
     if(!confirm('この端末をログアウトします。未同期の記録もアカウント別に端末内へ残します。'))return;
     memoFlush();capture();stopped=true;enabled=false;token='';studyStorage.switchTo('');location.reload();

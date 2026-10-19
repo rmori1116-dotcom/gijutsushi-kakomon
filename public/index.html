@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-<link rel="stylesheet" href="styles.css?v=8858aa54ee">
+<link rel="stylesheet" href="styles.css?v=af82a74c89">
 
 </head>
 <body>
@@ -223,7 +223,7 @@
           <button class="btn btn-ghost btn-sm" id="btnExport">記録をJSON保存</button>
           <button class="btn btn-ghost btn-sm" id="btnImport">保存した記録を読み込む</button>
           <input type="file" id="fileImport" accept="application/json,.json" class="hide">
-          <button class="btn btn-ghost btn-sm" id="btnReset">記録をすべて消す</button>
+          <button class="btn btn-ghost btn-sm" id="btnReset">端末の記録をすべて消す</button>
         </div>
         <div class="meta" style="margin-top:8px">解答記録はこの端末に自動保存されます。別の端末に移すときはJSONで保存してください。</div>
       </details>
@@ -421,7 +421,7 @@
 <script>
 /* データを読み込んでからアプリ本体(app.js)を起動する */
 (function () {
-  var V = '8858aa54ee';
+  var V = 'af82a74c89';
   var startupError = false;
   // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
   window.addEventListener('error', function (event) {
