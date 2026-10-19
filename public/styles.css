@@ -820,3 +820,5 @@ body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .syncCompactMore summary{font-size:.76rem;color:var(--sub);cursor:pointer}
 .syncCompactMore .row{gap:8px;flex-wrap:wrap;margin-top:10px}
 @media(max-width:480px){.syncCompactHead{align-items:flex-start;flex-direction:column;gap:12px}.syncCompactAction{width:100%}.syncCompactAction .btn{width:100%}#driveSyncCard{padding:16px}}
+
+.syncFileActions{gap:8px;flex-wrap:wrap;margin-top:14px}.syncFileHint{font-size:.73rem;margin:6px 0 0}#driveSyncCard #btnReset{color:#a53732}

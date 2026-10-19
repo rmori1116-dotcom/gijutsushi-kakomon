@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-<link rel="stylesheet" href="styles.css?v=b2cbf4fd6e">
+<link rel="stylesheet" href="styles.css?v=8858aa54ee">
 
 </head>
 <body>
@@ -202,7 +202,7 @@
     </div>
     <div id="recordsPane" class="hide">
     <details class="homeMore" id="recordCard" open>
-      <summary><span><strong>学習の記録を見る</strong><small>正答率と保存・読み込み</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
+      <summary><span><strong>学習の記録を見る</strong><small>学習の進み具合と正答率</small></span><span class="summaryArrow" aria-hidden="true">⌄</span></summary>
       <div class="homeMoreBody">
       <div class="stats" id="statsBox"></div>
       <section class="recordVisuals" aria-label="学習記録のグラフ">
@@ -218,11 +218,10 @@
         <div class="learningControls"><select id="answerLogSource" aria-label="解答履歴の問題種別"><option value="official">公式過去問</option><option value="prediction">予想問題</option><option value="all">すべて</option></select></div>
         <div id="answerLogRows"></div><button id="btnMoreAnswerLog" class="btn btn-ghost btn-sm hide" type="button">さらに50件表示</button>
       </details>
-      <details class="subSettings compactDetails"><summary>記録の保存・読み込み</summary>
+      <details class="subSettings compactDetails" id="recordTransfer"><summary>記録の保存・読み込み</summary>
         <div class="row" style="margin-top:14px">
-          <button class="btn btn-ghost btn-sm" id="btnExport">記録を保存</button>
+          <button class="btn btn-ghost btn-sm" id="btnExport">記録をJSON保存</button>
           <button class="btn btn-ghost btn-sm" id="btnImport">保存した記録を読み込む</button>
-          <label class="chip"><input type="checkbox" id="chkMemo">手書きメモも含める</label>
           <input type="file" id="fileImport" accept="application/json,.json" class="hide">
           <button class="btn btn-ghost btn-sm" id="btnReset">記録をすべて消す</button>
         </div>
@@ -422,7 +421,7 @@
 <script>
 /* データを読み込んでからアプリ本体(app.js)を起動する */
 (function () {
-  var V = 'b2cbf4fd6e';
+  var V = '8858aa54ee';
   var startupError = false;
   // 本体が起動途中で失敗しても、Service Workerの更新経路は動かす。
   window.addEventListener('error', function (event) {
