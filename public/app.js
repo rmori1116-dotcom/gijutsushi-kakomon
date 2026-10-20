@@ -2271,6 +2271,184 @@ function bookWorkedExamples(topicId,variants=false){
   });
   return host;
 }
+const KISO_AUDIO_BASE='yukkuri-5-15-20261020_115008/';
+let kisoAudioCatalogPromise;
+function kisoAudioCatalog(){return kisoAudioCatalogPromise ||= fetch(KISO_AUDIO_BASE+'catalog.json').then(r=>{if(!r.ok)throw Error('音声教材一覧を読み込めませんでした');return r.json();});}
+function kisoMinutes(seconds){return `${Math.round(seconds/60)}分`;}
+
+
+const kisoSubtitleCache=new Map();
+function kisoParseSrt(text){
+  function seconds(stamp){const [h,m,tail]=stamp.replace(',','.').split(':');return Number(h)*3600+Number(m)*60+Number(tail);}
+  return text.replace(/^\uFEFF/,'').replace(/\r/g,'').trim().split(/\n\s*\n/).filter(Boolean).map(block=>{
+    const lines=block.split('\n'),i=lines.findIndex(l=>l.includes('-->'));
+    const match=i>=0&&lines[i].match(/(\d+:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d+:\d{2}:\d{2}[,.]\d{3})/);
+    if(!match)throw Error('字幕形式が正しくありません');
+    return {start:seconds(match[1]),end:seconds(match[2]),text:lines.slice(i+1).join('\n')};
+  });
+}
+function kisoAudioCaptions(audio,panel){
+  const control=bookNode('label','kisoCaptionToggle'),toggle=bookNode('input');toggle.type='checkbox';toggle.checked=true;
+  try{toggle.checked=localStorage.getItem('kisoAudioCaptions')!=='off';}catch{}
+  control.append(toggle,document.createTextNode('字幕'));
+  const dock=bookNode('section','kisoTelopDock');dock.setAttribute('aria-label','いつでも操作できる音声コントロール');panel.appendChild(dock);
+  const visibility=bookNode('label','kisoBarVisibility'),barToggle=bookNode('input');barToggle.type='checkbox';barToggle.checked=true;
+  try{barToggle.checked=localStorage.getItem('kisoAudioBarVisible')!=='off';}catch{}
+  visibility.append(barToggle,document.createTextNode('操作バーを表示'));panel.insertBefore(visibility,panel.children[1]||null);
+  function showBar(){dock.hidden=!barToggle.checked;try{localStorage.setItem('kisoAudioBarVisible',barToggle.checked?'on':'off');}catch{}}
+  barToggle.addEventListener('change',showBar);showBar();
+
+  const box=bookNode('div','kisoCaptions','再生すると字幕が表示されます。');box.setAttribute('aria-label','音声の字幕');box.setAttribute('role','region');box.hidden=!toggle.checked;dock.appendChild(box);
+  let cues=[],serial=0,message='再生すると字幕が表示されます。',last=null;
+  const tools=bookNode('div','kisoTelopTools');dock.appendChild(tools);
+  let navigation=null;
+  const play=bookButton('▶ 再生',()=>{if(audio.paused)audio.play().catch(()=>{});else audio.pause();},'kisoTelopButton');play.setAttribute('aria-label','再生');
+  const previous=bookButton('前の会話へ',()=>{if(navigation)navigation.previous();else api.previous();},'kisoTelopButton');
+  const next=bookButton('次の会話へ',()=>{if(navigation)navigation.next();else api.next();},'kisoTelopButton');
+  const speed=bookNode('select','kisoTelopSpeed');speed.setAttribute('aria-label','再生速度');
+  for(const value of [.85,1,1.15,1.25,1.5,2]){const o=bookNode('option','',value+'倍');o.value=String(value);o.selected=value===1;speed.appendChild(o);}
+  speed.addEventListener('change',()=>{audio.defaultPlaybackRate=Number(speed.value);audio.playbackRate=Number(speed.value);});
+  tools.append(play,previous,next,speed,control);
+  function buttons(){const ready=!!audio.currentSrc&&audio.readyState>=1;play.disabled=!ready;previous.disabled=!ready||!cues.length;next.disabled=!ready||!cues.length;play.textContent=audio.paused?'▶ 再生':'Ⅱ 一時停止';play.setAttribute('aria-label',audio.paused?'再生':'一時停止');}
+  for(const event of ['play','pause','ended','loadedmetadata','emptied','kiso-captions-ready'])audio.addEventListener(event,buttons);
+  buttons();
+
+  function render(){
+    box.hidden=!toggle.checked;if(box.hidden)return;
+    const time=audio.currentTime;
+    // Find the final cue starting before the current time, including after seeking backwards.
+    let lo=0,hi=cues.length-1,found=-1;
+    while(lo<=hi){const mid=(lo+hi)>>1;if(cues[mid].start<=time){found=mid;lo=mid+1;}else hi=mid-1;}
+    const text=found>=0&&time<cues[found].end?cues[found].text:(cues.length?'':message);
+    if(text!==last){box.textContent=text;last=text;}
+  }
+  toggle.addEventListener('change',()=>{try{localStorage.setItem('kisoAudioCaptions',toggle.checked?'on':'off');}catch{}render();});
+  for(const event of ['timeupdate','seeking','seeked','loadedmetadata','ended'])audio.addEventListener(event,render);
+  const api={speed,setNavigation(value){navigation=value;},previous(){if(!cues.length)return 'loading';let active=-1;for(let i=0;i<cues.length&&cues[i].start<=audio.currentTime+0.05;i++)active=i;audio.currentTime=active>0?cues[active-1].start:0;render();return 'moved';},next(){if(!cues.length)return 'loading';const cue=cues.find(c=>c.start>audio.currentTime+0.1);if(!cue)return 'end';audio.currentTime=cue.start;render();return 'moved';},load(data,chapter=null){
+    const request=++serial;cues=[];message='字幕を読み込み中…';last=null;render();
+    if(!data.subtitles){message='この音声には字幕がありません。';render();return;}
+    const url=KISO_AUDIO_BASE+data.subtitles;
+    if(!kisoSubtitleCache.has(url)){
+      const pending=fetch(url).then(r=>{if(!r.ok)throw Error('字幕を読み込めませんでした');return r.text();}).then(kisoParseSrt).catch(e=>{kisoSubtitleCache.delete(url);throw e;});kisoSubtitleCache.set(url,pending);
+    }
+    kisoSubtitleCache.get(url).then(all=>{
+      if(request!==serial||!panel.isConnected)return;
+      if(all.length!==data.lines.length)throw Error('字幕と台本の発話数が一致しません');
+      if(chapter===null)cues=all;
+      else{const indices=data.lines.flatMap((l,i)=>l.chapter===chapter?[i]:[]);if(!indices.length)throw Error('この回の字幕がありません');const offset=all[indices[0]].start;cues=indices.map(i=>({...all[i],start:all[i].start-offset,end:all[i].end-offset}));}
+      message='';last=null;render();audio.dispatchEvent(new Event('kiso-captions-ready'));
+    }).catch(()=>{if(request===serial&&panel.isConnected){message='字幕を読み込めませんでした。音声はそのまま再生できます。';last=null;render();}});
+  }};
+  return api;
+}
+
+function kisoAudioLibrary(host){
+  const section=bookNode('section','');host.appendChild(section);
+  const parentId=bookState.parentId||'kiso-1';
+  const groupTitle=BOOK_PARENT_BY_ID.get(parentId)?.title||'第1群';
+  const chips=bookNode('nav','listenChips');chips.setAttribute('aria-label','音声教材の群');section.appendChild(chips);
+  TEXTBOOK.parents.filter(p=>p.subject==='kiso').forEach(p=>{
+    const active=parentId===p.id;
+    const button=bookButton(p.title,()=>bookShow('kiso',p.id),`btn ${active?'btn-primary':'btn-ghost'} btn-sm`);button.setAttribute('aria-pressed',String(active));chips.appendChild(button);
+  });
+  const player=bookNode('section','listenPlayer');player.id='kisoGroupPlayer';player.setAttribute('aria-label','群の通し再生');section.appendChild(player);
+  player.appendChild(bookNode('div','listenEyebrow','基礎科目 · 群の通し再生'));
+  player.appendChild(bookNode('h2','',groupTitle));
+  const description=bookNode('p','listenHint','この群の音声を準備しています…');player.appendChild(description);
+  const startButton=bookButton('この群を最初から通して聴く',()=>playAt(0),'btn btn-primary');startButton.disabled=true;player.appendChild(startButton);
+  const now=bookNode('p','','');now.setAttribute('role','status');now.id='kisoGroupNow';player.appendChild(now);
+  const audio=bookNode('audio');audio.controls=true;audio.preload='none';audio.hidden=true;audio.setAttribute('aria-label',groupTitle+'の連続再生');player.appendChild(audio);
+  const captions=kisoAudioCaptions(audio,player);
+  const controls=bookNode('div','listenControls');
+  const prev=bookButton('前の話',()=>playAt(index-1),'btn btn-ghost btn-sm'),next=bookButton('次の話',()=>playAt(index+1),'btn btn-ghost btn-sm');prev.disabled=true;next.disabled=true;controls.append(prev,next);player.appendChild(controls);
+  player.appendChild(bookNode('p','listenHint','各テーマの話を順番に再生します。個別の話は各テーマの音声一覧から聴けます。全編試聴・誤読の最終確認は未完了です。'));
+  const grid=bookNode('div','listenHint');section.appendChild(grid);
+  const queue=[],rows=[];let index=-1,playRequest=0;
+  function update(){
+    prev.disabled=index<=0;next.disabled=index<0||index>=queue.length-1;
+    rows.forEach((button,i)=>{button.setAttribute('aria-pressed',String(i===index));button.classList.toggle('listenPlaying',i===index);});
+  }
+  function playAt(target){
+    if(!section.isConnected||target<0||target>=queue.length)return;
+    const token=++playRequest;index=target;audio.pause();audio.hidden=false;audio.src=KISO_AUDIO_BASE+queue[index].src+'?seek=1';audio.load();captions.load(queue[index].data,queue[index].chapter);
+    now.textContent=`${index+1} / ${queue.length}話 · ${queue[index].topicTitle} ／ ${queue[index].label}`;update();
+    audio.play().catch(e=>{if(token===playRequest&&e.name!=='AbortError')now.textContent+=' · 再生ボタンを押してください。';});
+  }
+  captions.setNavigation({previous:()=>captions.previous(),next:()=>{if(captions.next()==='end'&&index+1<queue.length)playAt(index+1);}});
+  audio.addEventListener('ended',()=>{if(index+1<queue.length)playAt(index+1);else{now.textContent='この群の再生が終わりました。';update();}});
+  audio.addEventListener('error',()=>{now.textContent='音声を読み込めませんでした。「次の話」または話のボタンから再度お試しください。';});
+  kisoAudioCatalog().then(items=>Promise.all(items.filter(t=>t.topicId.startsWith(parentId+'-')).map(t=>fetch(KISO_AUDIO_BASE+'data/'+t.topicId+'.json').then(r=>{if(!r.ok)throw Error(t.title+'を読み込めませんでした');return r.json();})))).then(topics=>{
+    if(!section.isConnected)return;grid.replaceChildren();
+    description.textContent=`${topics.length}テーマ · ${topics.reduce((n,t)=>n+t.chapters,0)}話 · 約${kisoMinutes(topics.reduce((n,t)=>n+t.durationSeconds,0))}。テーマ順に続けて再生します。`;
+    topics.forEach(t=>{
+      const chapters=[...new Set(t.lines.map(l=>l.chapter))].sort((a,b)=>a-b);
+      chapters.forEach(chapter=>{
+        const media=t.audio.find(m=>m.label===`第${chapter}回`);if(!media)throw Error(t.title+'の第'+chapter+'回が見つかりません');
+        const title=t.lines.find(l=>l.chapter===chapter).chapterTitle,position=queue.length;
+        queue.push({data:t,chapter,src:media.src,topicTitle:t.title,label:`第${chapter}回 · ${title}`});
+      });
+        });startButton.disabled=queue.length===0;now.textContent='通し再生で群全体を聴けます。テーマを選ぶと、そのテーマに対応する話を一覧から聴けます。';
+  }).catch(e=>{startButton.disabled=true;grid.replaceChildren(bookNode('p','meta',e.message));description.textContent='教材を読み込めませんでした。ページを再読み込みしてください。';});
+}
+
+document.addEventListener('play',e=>{if(e.target instanceof HTMLAudioElement&&e.target.closest('#textbook'))for(const a of document.querySelectorAll('#textbook audio'))if(a!==e.target)a.pause();},true);
+
+function kisoAudioPlayer(topic){
+  const panel=bookNode('section','listenPlayer listenCompact');panel.id='kisoAudioPlayer';panel.appendChild(bookNode('h3','','このテーマの音声'));panel.setAttribute('aria-label','このテーマの音声教材');
+  const content=bookNode('details','listenAudioFold');content.appendChild(bookNode('summary','','音声一覧を開く（通し版・各回）'));panel.appendChild(content);
+  content.appendChild(bookNode('div','listenEyebrow','聴いて学ぶ'));
+  content.appendChild(bookNode('p','listenHint','通し版、または話を選んで再生できます。'));
+  const state=bookNode('p','listenHint','音声教材を読み込み中…');state.setAttribute('role','status');content.appendChild(state);
+  fetch(KISO_AUDIO_BASE+'data/'+encodeURIComponent(topic.id)+'.json').then(r=>{if(!r.ok)throw Error('音声教材を読み込めませんでした');return r.json();}).then(data=>{
+    if(!panel.isConnected)return;
+    let fullPart=0;
+    const controls=bookNode('div','listenControls'),select=bookNode('select');select.id='listenChapter';
+    const label=bookNode('label','','再生する回');label.htmlFor=select.id;
+    data.audio.forEach((m,i)=>{const chapter=i?data.lines.find(l=>l.chapter===i):null;const o=bookNode('option','',m.label+(chapter?' · '+chapter.chapterTitle:''));o.value=String(i);select.appendChild(o);});
+    controls.append(label,select);content.appendChild(controls);
+    const audio=bookNode('audio');audio.controls=true;audio.preload='none';audio.setAttribute('aria-label',topic.title+'の音声');content.appendChild(audio);
+    const captions=kisoAudioCaptions(audio,panel);
+    const extra=bookNode('div','listenControls');
+    const back=bookButton('前の会話へ',()=>{if(captions.previous()==='loading')state.textContent='会話の位置を読み込み中です。少し待ってからお試しください。';},'btn btn-ghost btn-sm');back.disabled=true;
+    const nextConversation=bookButton('次の会話へ',()=>{
+      const result=captions.next();
+      if(result==='loading')state.textContent='会話の位置を読み込み中です。少し待ってからお試しください。';
+      if(result==='end'){
+        const i=Number(select.value),wasPlaying=!audio.paused;
+        if(i===0&&advanceFull(wasPlaying))return;
+        if(i>0&&i+1<data.audio.length){select.value=String(i+1);load();if(wasPlaying)audio.play().catch(()=>{});}
+        else state.textContent='この音声の最後の会話です。';
+      }
+    },'btn btn-ghost btn-sm');nextConversation.disabled=true;
+    audio.addEventListener('loadedmetadata',()=>{back.disabled=false;nextConversation.disabled=false;});
+
+    const speed=captions.speed;
+    captions.setNavigation({previous:()=>back.click(),next:()=>nextConversation.click()});
+
+    function advanceFull(autoPlay){
+      const parts=data.audio[0].playlist;if(Number(select.value)!==0||!parts||fullPart+1>=parts.length)return false;
+      fullPart++;load(false);if(autoPlay)audio.play().catch(()=>{});return true;
+    }
+    function load(reset=true){
+      if(reset)fullPart=0;back.disabled=true;nextConversation.disabled=true;audio.pause();
+      const n=Number(select.value),parts=data.audio[0].playlist,part=n===0&&parts?parts[fullPart]:null;
+      state.textContent=part?`通し再生 · 第${part.chapter}回 / ${parts.length}回（各回を続けて再生）`:'音声の長さを確認中です。';
+      audio.src=KISO_AUDIO_BASE+(part?part.src:data.audio[n].src)+'?seek=1';audio.load();audio.playbackRate=Number(speed.value);
+      captions.load(data,part?part.chapter:(n?Number(data.audio[n].label.match(/\d+/)[0]):null));
+    }
+    audio.addEventListener('ended',()=>advanceFull(true));
+    select.addEventListener('change',load);
+    audio.addEventListener('loadedmetadata',()=>{if(Number(select.value)!==0)state.textContent='準備できました。再生ボタンで開始します。';});
+    audio.addEventListener('play',()=>state.textContent='再生中 · 説明を読んだり、下の過去問に進んだりできます。');
+    audio.addEventListener('error',()=>state.textContent='音声を読み込めませんでした。再読み込みをお試しください。');
+    audio.preload='metadata';load();
+  }).catch(e=>state.textContent=e.message);
+  return panel;
+}
+document.addEventListener('click',e=>{if(e.target.closest('#workspaceNav,#btnHome'))for(const a of document.querySelectorAll('#textbook audio'))a.pause();},true);
+new MutationObserver(()=>{if($('textbook').classList.contains('hide'))for(const a of document.querySelectorAll('#textbook audio'))a.pause();}).observe($('textbook'),{attributes:true,attributeFilter:['class']});
+
+
 function bookShow(subject=null,parentId=null,topicId=null,scroll=0){
   if(topicId && !BOOK_TOPIC_BY_ID.has(topicId)) return;
   bookState={subject,parentId,topicId,scroll};
@@ -2367,6 +2545,7 @@ function bookStudyActions(topicId){
   host.appendChild(form); return host;
 }
 function renderBook(){
+  for(const audio of document.querySelectorAll("#textbook audio"))audio.pause();
   bookCrumbs();
   renderBookLearningChart();
   $('comparisonSection').classList.toggle('hide',!!bookState.topicId);
@@ -2376,6 +2555,7 @@ function renderBook(){
   if(topic){
     const article=bookNode('article','card bookArticle');
     article.appendChild(bookNode('h2','',topic.title));
+    if(topic.subject==='kiso')article.appendChild(kisoAudioPlayer(topic));
     article.appendChild(bookLearnedControl(topic));
     const body=TEXTBOOK.content?.[topic.id];
     if(body?.editorialStatus==='source-summary') article.appendChild(bookNode('p','meta',TEXTBOOK.workedExamples?.[topic.id]?.length?'要点ノートに計算・手順の例題を追加しています。':'要点ノート：公式や例題の詳しい説明は順次追加します。'));
@@ -2439,7 +2619,7 @@ function renderBook(){
       if(COMPARISON_CARDS.some(c=>c.topicIds.includes(topic.id)))nav.appendChild(bookButton('用語・公式を比較する',()=>{
         const heading=$('bookComparisonsHeading');heading.scrollIntoView({behavior:'smooth',block:'start'});heading.focus({preventScroll:true});
       },'btn btn-ghost btn-sm'));
-      article.insertBefore(nav,article.children[navIndex]||null);
+      article.insertBefore(nav,article.querySelector('h3[id^="book-section-"]')||null);
     }else{
       article.appendChild(bookNode('p','bookEmpty','このテーマの説明は準備中です。対応する過去問は下から解けます。'));
     }
@@ -3054,6 +3234,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft')  $('btnPrev').click();
 });
 renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
+if(new URL(location.href).searchParams.get('listen')==='kiso')bookShow('kiso','kiso-1');
 
 /* ============================================================
    PWA / モバイル向けの追加処理
