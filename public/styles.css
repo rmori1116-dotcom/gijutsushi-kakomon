@@ -637,6 +637,20 @@ header button{white-space:nowrap;flex:0 0 auto}
 .kisoTelopDock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;width:min(920px,calc(100% - 20px));background:rgba(12,16,20,.64);color:#fff;border:1px solid #ffffff26;border-radius:12px;box-shadow:0 6px 24px #0003;overflow:hidden}.kisoTelopDock .kisoCaptions{position:static;transform:none;width:100%;padding:12px 16px;margin:0;border-radius:0;background:transparent;max-height:30vh;overflow:auto;pointer-events:auto}.kisoTelopTools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid #ffffff26}.kisoTelopButton,.kisoTelopSpeed{font:inherit;font-size:.83rem;color:#fff;background:#ffffff1c;border:1px solid #ffffff40;border-radius:7px;min-height:40px;padding:6px 10px;cursor:pointer}.kisoTelopButton:disabled{opacity:.45;cursor:default}.kisoTelopSpeed option{color:#182332;background:white}.kisoTelopDock .kisoCaptionToggle{font-size:.83rem;color:white;padding:0 6px;margin-left:auto;min-height:40px}.kisoTelopTools button:focus-visible,.kisoTelopTools select:focus-visible{outline:2px solid #8dc4ff;outline-offset:2px}@media(max-width:480px){.kisoTelopTools{gap:4px;padding:6px}.kisoTelopButton,.kisoTelopSpeed{padding:5px 7px;font-size:.75rem;min-height:44px}.kisoTelopDock .kisoCaptionToggle{padding:0 2px;font-size:.75rem;margin-left:0}}
 .kisoTelopDock[hidden]{display:none}.kisoBarVisibility{display:flex;align-items:center;gap:8px;min-height:44px;font-size:.9rem;cursor:pointer;width:fit-content}.kisoBarVisibility input{width:19px;height:19px;accent-color:var(--accent)}.listenCompact{padding:12px 16px}.listenCompact>h3{font-size:1rem;margin:0}.listenAudioFold>summary{font-size:.88rem;font-weight:600;cursor:pointer;min-height:44px;padding:9px 0;color:var(--accent-d)}.listenAudioFold:not([open]){margin:0}.listenAudioFold .listenEpisodes{margin-top:12px}
 
+/* Audio surfaces follow the app palette; the telop stays dark in both modes. */
+:root{--listen-bg:#eff6f3;--listen-line:#b8d5c6}
+.listenPlayer,.listenCard,.listenSection{background:var(--listen-bg);border-color:var(--listen-line);color:var(--text)}
+.listenPlayer h3,.kisoBarVisibility{color:var(--text)}
+.listenEyebrow,.listenBadge{color:var(--accent-d)}
+.listenEpisode{background:var(--card);color:var(--text);border-color:var(--line)}
+.listenPlayer select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px}
+.kisoTelopDock{background:rgba(9,17,14,.86);border-color:#8aa69b80;box-shadow:0 5px 24px #0006;color-scheme:dark}
+.kisoTelopTools{background:rgba(0,0,0,.18);border-top-color:#ffffff45}
+.kisoTelopTools .kisoTelopButton,.kisoTelopTools .kisoTelopSpeed{background:#293c34;color:#fff;border-color:#8fa99d;min-height:44px}
+.kisoTelopTools .kisoTelopButton:hover:not(:disabled){background:#375648}
+.kisoTelopTools .kisoTelopSpeed option{background:#20362d;color:#fff}
+.kisoTelopDock .kisoCaptions,.kisoTelopDock .kisoCaptionToggle{color:#fff}
+.kisoTelopDock .kisoCaptionToggle input{accent-color:#70d9ac}
 
 /* ============================================================
    PWA / モバイル向け追加スタイル
@@ -837,3 +851,15 @@ body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .syncFileActions{gap:8px;flex-wrap:wrap;margin-top:14px}.syncFileHint{font-size:.73rem;margin:6px 0 0}#driveSyncCard #btnReset{color:#a53732}
 
 #driveDelete{color:#a53732}.syncCompactMore>#driveConnect{margin-top:12px}
+
+/* Textbook audio: explicit dark surfaces prevent light panels with white text. */
+@media (prefers-color-scheme: dark){
+  :root{--listen-bg:#20362f;--listen-line:#48685a}
+  .listenPlayer,.listenCard,.listenSection{background:var(--listen-bg);color:var(--text);border-color:var(--listen-line)}
+  .listenHero{background:linear-gradient(120deg,#20362f,#1a302b);border-color:var(--listen-line)}
+  .listenEpisode:hover{background:#29483b}
+  .listenEpisode.listenPlaying{background:#244d3c;color:#b9f2d6;border-color:#6dc59d}
+  .listenPlayer audio{color-scheme:dark}
+  .kisoTelopDock{background:rgba(6,12,9,.90);border-color:#769b8780}
+  .kisoBarVisibility input{color-scheme:dark}
+}
