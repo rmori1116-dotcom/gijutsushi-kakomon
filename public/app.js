@@ -2271,6 +2271,8 @@ function bookWorkedExamples(topicId,variants=false){
   });
   return host;
 }
+const APT_AUDIO_BASE='yukkuri-apt-19-20261021_124930/';
+const APT_AUDIO_HELD=[];
 const KISO_AUDIO_BASE='yukkuri-5-15-20261020_115008/';
 let kisoAudioCatalogPromise;
 function kisoAudioCatalog(){return kisoAudioCatalogPromise ||= fetch(KISO_AUDIO_BASE+'catalog.json').then(r=>{if(!r.ok)throw Error('音声教材一覧を読み込めませんでした');return r.json();});}
@@ -2327,7 +2329,7 @@ function kisoAudioCaptions(audio,panel){
   const api={speed,setNavigation(value){navigation=value;},previous(){if(!cues.length)return 'loading';let active=-1;for(let i=0;i<cues.length&&cues[i].start<=audio.currentTime+0.05;i++)active=i;audio.currentTime=active>0?cues[active-1].start:0;render();return 'moved';},next(){if(!cues.length)return 'loading';const cue=cues.find(c=>c.start>audio.currentTime+0.1);if(!cue)return 'end';audio.currentTime=cue.start;render();return 'moved';},load(data,chapter=null){
     const request=++serial;cues=[];message='字幕を読み込み中…';last=null;render();
     if(!data.subtitles){message='この音声には字幕がありません。';render();return;}
-    const url=KISO_AUDIO_BASE+data.subtitles;
+    const url=(data.assetBase||KISO_AUDIO_BASE)+data.subtitles;
     if(!kisoSubtitleCache.has(url)){
       const pending=fetch(url).then(r=>{if(!r.ok)throw Error('字幕を読み込めませんでした');return r.text();}).then(kisoParseSrt).catch(e=>{kisoSubtitleCache.delete(url);throw e;});kisoSubtitleCache.set(url,pending);
     }
@@ -2394,13 +2396,15 @@ function kisoAudioLibrary(host){
 document.addEventListener('play',e=>{if(e.target instanceof HTMLAudioElement&&e.target.closest('#textbook'))for(const a of document.querySelectorAll('#textbook audio'))if(a!==e.target)a.pause();},true);
 
 function kisoAudioPlayer(topic){
+  const assetBase=topic.subject==='tekisei'?APT_AUDIO_BASE:KISO_AUDIO_BASE;
   const panel=bookNode('section','listenPlayer listenCompact');panel.id='kisoAudioPlayer';panel.appendChild(bookNode('h3','','このテーマの音声'));panel.setAttribute('aria-label','このテーマの音声教材');
   const content=bookNode('details','listenAudioFold');content.appendChild(bookNode('summary','','音声一覧を開く（通し版・各回）'));panel.appendChild(content);
   content.appendChild(bookNode('div','listenEyebrow','聴いて学ぶ'));
   content.appendChild(bookNode('p','listenHint','通し版、または話を選んで再生できます。'));
   const state=bookNode('p','listenHint','音声教材を読み込み中…');state.setAttribute('role','status');content.appendChild(state);
-  fetch(KISO_AUDIO_BASE+'data/'+encodeURIComponent(topic.id)+'.json').then(r=>{if(!r.ok)throw Error('音声教材を読み込めませんでした');return r.json();}).then(data=>{
+  fetch(assetBase+'data/'+encodeURIComponent(topic.id)+'.json').then(r=>{if(!r.ok)throw Error('音声教材を読み込めませんでした');return r.json();}).then(data=>{
     if(!panel.isConnected)return;
+    data.assetBase=assetBase;
     let fullPart=0;
     const controls=bookNode('div','listenControls'),select=bookNode('select');select.id='listenChapter';
     const label=bookNode('label','','再生する回');label.htmlFor=select.id;
@@ -2433,7 +2437,7 @@ function kisoAudioPlayer(topic){
       if(reset)fullPart=0;back.disabled=true;nextConversation.disabled=true;audio.pause();
       const n=Number(select.value),parts=data.audio[0].playlist,part=n===0&&parts?parts[fullPart]:null;
       state.textContent=part?`通し再生 · 第${part.chapter}回 / ${parts.length}回（各回を続けて再生）`:'音声の長さを確認中です。';
-      audio.src=KISO_AUDIO_BASE+(part?part.src:data.audio[n].src)+'?seek=1';audio.load();audio.playbackRate=Number(speed.value);
+      audio.src=assetBase+(part?part.src:data.audio[n].src)+'?seek=1';audio.load();audio.playbackRate=Number(speed.value);
       captions.load(data,part?part.chapter:(n?Number(data.audio[n].label.match(/\d+/)[0]):null));
     }
     audio.addEventListener('ended',()=>advanceFull(true));
@@ -2555,7 +2559,8 @@ function renderBook(){
   if(topic){
     const article=bookNode('article','card bookArticle');
     article.appendChild(bookNode('h2','',topic.title));
-    if(topic.subject==='kiso')article.appendChild(kisoAudioPlayer(topic));
+    if(topic.subject==='kiso'||(topic.subject==='tekisei'&&!APT_AUDIO_HELD.includes(topic.id)))article.appendChild(kisoAudioPlayer(topic));
+    if(topic.subject==='tekisei'&&APT_AUDIO_HELD.includes(topic.id))article.appendChild(bookNode('p','listenHint','音声教材は台本の出典・法令確認中です。'));
     article.appendChild(bookLearnedControl(topic));
     const body=TEXTBOOK.content?.[topic.id];
     if(body?.editorialStatus==='source-summary') article.appendChild(bookNode('p','meta',TEXTBOOK.workedExamples?.[topic.id]?.length?'要点ノートに計算・手順の例題を追加しています。':'要点ノート：公式や例題の詳しい説明は順次追加します。'));
@@ -3235,6 +3240,7 @@ document.addEventListener('keydown', e=>{
 });
 renderComparisonCards($('comparisonLibrary'),COMPARISON_CARDS);
 if(new URL(location.href).searchParams.get('listen')==='kiso')bookShow('kiso','kiso-1');
+if(new URL(location.href).searchParams.get('listen')==='tekisei'){const requested=BOOK_TOPIC_BY_ID.get(new URL(location.href).searchParams.get('topic')||'apt-01');if(requested?.subject==='tekisei')bookShow('tekisei',requested.parentId,requested.id);}
 
 /* ============================================================
    PWA / モバイル向けの追加処理
