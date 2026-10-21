@@ -1059,5 +1059,6 @@
   "subtitles": "media/apt-01/v2/subtitles.srt",
   "reviewNote": "ローカルのAquesTalk1で新しく合成しました。全編の試聴・誤読の最終確認は未実施です。",
   "assetBase": "yukkuri-apt-19-20261021_124930/",
-  "previewStatus": "ready_for_codex"
+  "previewStatus": "ready_for_codex",
+  "mediaBase": "https://rmori1116-dotcom.github.io/gijutsushi-audio-tekisei/"
 }

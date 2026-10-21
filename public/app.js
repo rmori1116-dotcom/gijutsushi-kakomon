@@ -2372,7 +2372,7 @@ function kisoAudioLibrary(host){
   }
   function playAt(target){
     if(!section.isConnected||target<0||target>=queue.length)return;
-    const token=++playRequest;index=target;audio.pause();audio.hidden=false;audio.src=KISO_AUDIO_BASE+queue[index].src+'?seek=1';audio.load();captions.load(queue[index].data,queue[index].chapter);
+    const token=++playRequest;index=target;audio.pause();audio.hidden=false;audio.src=(queue[index].data.mediaBase||KISO_AUDIO_BASE)+queue[index].src+'?seek=1';audio.load();captions.load(queue[index].data,queue[index].chapter);
     now.textContent=`${index+1} / ${queue.length}話 · ${queue[index].topicTitle} ／ ${queue[index].label}`;update();
     audio.play().catch(e=>{if(token===playRequest&&e.name!=='AbortError')now.textContent+=' · 再生ボタンを押してください。';});
   }
@@ -2437,7 +2437,7 @@ function kisoAudioPlayer(topic){
       if(reset)fullPart=0;back.disabled=true;nextConversation.disabled=true;audio.pause();
       const n=Number(select.value),parts=data.audio[0].playlist,part=n===0&&parts?parts[fullPart]:null;
       state.textContent=part?`通し再生 · 第${part.chapter}回 / ${parts.length}回（各回を続けて再生）`:'音声の長さを確認中です。';
-      audio.src=assetBase+(part?part.src:data.audio[n].src)+'?seek=1';audio.load();audio.playbackRate=Number(speed.value);
+      audio.src=(data.mediaBase||assetBase)+(part?part.src:data.audio[n].src)+'?seek=1';audio.load();audio.playbackRate=Number(speed.value);
       captions.load(data,part?part.chapter:(n?Number(data.audio[n].label.match(/\d+/)[0]):null));
     }
     audio.addEventListener('ended',()=>advanceFull(true));

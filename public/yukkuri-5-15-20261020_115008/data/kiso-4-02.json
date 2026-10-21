@@ -1056,5 +1056,6 @@
     }
   ],
   "subtitles": "media/kiso-4-02/v2/subtitles.srt",
-  "reviewNote": "ローカルのAquesTalk1で新しく合成しました。全編の試聴・誤読の最終確認は未実施です。"
+  "reviewNote": "ローカルのAquesTalk1で新しく合成しました。全編の試聴・誤読の最終確認は未実施です。",
+  "mediaBase": "https://rmori1116-dotcom.github.io/gijutsushi-audio-kiso/"
 }
